@@ -1,0 +1,63 @@
+# =============================================
+# LIB FLEET MANAGEMENT SYSTEM – MONOREPO .gitignore
+# Works perfectly for /backend + /frontend (Vite + React)
+# =============================================
+
+# Node.js / Backend
+backend/node_modules/
+backend/.env
+backend/.env.*
+backend/npm-debug.log*
+backend/dist/
+backend/build/
+backend/uploads/
+backend/temp/
+backend/tmp/
+
+# React / Vite Frontend
+frontend/node_modules/
+frontend/.env
+frontend/.env.*
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+
+# Build outputs
+/dist/
+/build/
+
+# Local uploads (CRITICAL – NEVER commit real vehicle documents!)
+uploads/
+public/uploads/
+storage/
+
+# Optional: if you use Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Security
+*.pem
+*.key
+*.crt
