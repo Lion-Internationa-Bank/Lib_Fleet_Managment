@@ -1,4 +1,5 @@
 //under reveiw to be filled 
+import mongoose from "mongoose";
 const TireSchema = new mongoose.Schema({
   plate_no: { type: String, ref: 'Vehicle', required: true },
   make: String,

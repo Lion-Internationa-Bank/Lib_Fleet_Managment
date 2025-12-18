@@ -1,4 +1,5 @@
 //seen
+import mongoose from "mongoose";
 const AccidentSchema = new mongoose.Schema({
   plate_no: { type: String, ref: 'Vehicle', required: true },
   accident_date: Date,

@@ -1,4 +1,5 @@
 // under review
+import mongoose from "mongoose";
 const ConfigSchema = new mongoose.Schema({
   key: { type: String, unique: true },
   value: mongoose.Schema.Types.Mixed,

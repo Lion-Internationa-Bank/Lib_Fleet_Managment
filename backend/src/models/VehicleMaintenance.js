@@ -1,5 +1,3 @@
-//seen
-// models/VehicleMaintenance.js
 import mongoose from 'mongoose';
 
 const VehicleMaintenanceSchema = new mongoose.Schema(
@@ -11,6 +9,11 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
+
+    vehicle_type: { type: String, required: true, trim: true },
+    invoice_no: { type: String, required: true, trim: true, uppercase: true },
+    location: { type: String, required: true, trim: true },
+
     workshop_name: String,
 
     maintenance_type: {
@@ -19,27 +22,16 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
       required: true,
     },
 
-    labour_cost: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+    labour_cost: { type: Number, default: 0, min: 0 },
 
-    // THIS IS AUTO-CALCULATED → NEVER SEND FROM FRONTEND
-    spare_cost: {
-      type: Number,
-      default: 0,
-    },
+    spare_cost: { type: Number, default: 0 },
+    total_cost: { type: Number, default: 0 },
 
-    // THIS IS FINAL TOTAL → AUTO-CALCULATED
-    total_cost: {
-      type: Number,
-      default: 0,
-    },
+    km_diff: { type: Number, default: null },
+    cost_per_km: { type: Number, default: null },
 
     costed_by: String,
 
-    // USER FILLS THIS ARRAY ONLY
     replaced_spare_part: [
       {
         part: { type: String, required: true },
@@ -47,7 +39,7 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
       },
     ],
 
-    current_km: Number,
+    km_at_service: { type: Number, required: true, min: 0 },
     date_in: Date,
     date_out: Date,
     remark: String,
@@ -55,53 +47,65 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes
 VehicleMaintenanceSchema.index({ plate_no: 1, date_out: -1 });
 
+// Recalculate spare_cost and total_cost
 const calculateCosts = function () {
-  // Sum all spare parts
   const partsTotal =
     this.replaced_spare_part?.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
 
-  // spare_cost = sum of parts only
   this.spare_cost = Number(partsTotal.toFixed(2));
-
-  // total_cost = labour + parts
-  this.total_cost = Number(((this.labour_cost || 0) + this.spare_cost).toFixed(2));
+  this.total_cost = Number((this.labour_cost + this.spare_cost).toFixed(2));
 };
 
-// Run on create & update (save)
-VehicleMaintenanceSchema.pre('save', function (next) {
+VehicleMaintenanceSchema.pre('save', async function () {
+  // 1. Recalculate costs for current record
   calculateCosts.call(this);
-  next();
-});
 
-// Run on findOneAndUpdate, updateOne, etc.
-VehicleMaintenanceSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
-  const update = this.getUpdate();
+  // 2. Current (newest) record always has null values
+  this.km_diff = null;
+  this.cost_per_km = null;
 
-  // If replaced_spare_part or labour_cost is being modified → recalculate
-  if (
-    update.replaced_spare_part ||
-    update.labour_cost ||
-    update.$set?.replaced_spare_part ||
-    update.$set?.labour_cost ||
-    update.$push?.replaced_spare_part ||
-    update.$pull?.replaced_spare_part
-  ) {
-    // Get current document or updated values
-    const docToUpdate = update.$set || update;
+  // 3. Determine date to compare against
+  const compareDate = this.date_out || this.date_in || new Date();
 
-    const parts = docToUpdate.replaced_spare_part || this.replaced_spare_part || [];
-    const partsTotal = parts.reduce((sum, item) => sum + (item.cost || 0), 0);
-    const labour = docToUpdate.labour_cost ?? this.labour_cost ?? 0;
+  // 4. Find the most recent previous maintenance record
+  const previous = await this.constructor
+    .findOne({
+      plate_no: this.plate_no,
+      _id: { $ne: this._id },
+      date_out: { $lt: compareDate },
+    })
+    .sort({ date_out: -1 })
+    .lean();
 
-    this.set({
-      spare_cost: Number(partsTotal.toFixed(2)),
-      total_cost: Number((labour + partsTotal).toFixed(2)),
-    });
+  // 5. Update previous record if exists
+  if (previous && previous.km_at_service != null) {
+    const kmDiff = this.km_at_service - previous.km_at_service;
+
+    if (kmDiff > 0) {
+      // Safely recalculate previous total_cost
+      const prevPartsTotal =
+        previous.replaced_spare_part?.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
+      const prevTotalCost = Number((previous.labour_cost + prevPartsTotal).toFixed(2));
+
+      await this.constructor.updateOne(
+        { _id: previous._id },
+        {
+          $set: {
+            km_diff: kmDiff,
+            cost_per_km: Number((prevTotalCost / kmDiff).toFixed(4)),
+          },
+        }
+      );
+    } else {
+      // km not increased or rolled back
+      await this.constructor.updateOne(
+        { _id: previous._id },
+        { $set: { km_diff: null, cost_per_km: null } }
+      );
+    }
   }
-  next();
 });
 
 export default mongoose.model('VehicleMaintenance', VehicleMaintenanceSchema);

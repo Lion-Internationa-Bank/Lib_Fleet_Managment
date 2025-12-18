@@ -39,7 +39,7 @@ const FuelExpenseSchema = new mongoose.Schema(
       min: 0,
     },
     liter_used: { type: Number,
-         required: true, 
+         default: null,
         },     // fuel_in_birr / birr_per_liter
 
     fuel_usage_type: {
@@ -63,7 +63,7 @@ FuelExpenseSchema.index({ plate_no: 1, starting_date: -1 });
 
 
 FuelExpenseSchema.pre('save', async function (next) {
-  try {
+
     // 1. Calculate liter_used immediately
     this.liter_used = Number((this.fuel_in_birr / this.birr_per_liter).toFixed(3));
 
@@ -98,10 +98,7 @@ FuelExpenseSchema.pre('save', async function (next) {
       );
     }
 
-    next();
-  } catch (error) {
-    next(error);
-  }
+
 });
 
 export default mongoose.model('FuelExpense', FuelExpenseSchema);

@@ -1,0 +1,796 @@
+// scripts/vehicleScript.js
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Vehicle from '../models/Vehicle.js'; // Adjust path as needed
+import ForeclosureVehicle from '../models/ForeclosureVehicle.js'; // Adjust path as needed
+
+dotenv.config();
+
+// Connect to MongoDB
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/lib_fms');
+    console.log('✅ MongoDB connected successfully');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    process.exit(1);
+  }
+};
+
+// Sample vehicle data
+const sampleVehicles = [
+  {
+    plate_no: 'AA123A',
+    location: 'Head Office',
+    vehicle_allocation: 'Executive',
+    vehicle_type: 'Sedan',
+    body_color: 'White',
+    manufacturing_year: 2020,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC001',
+    vehicle_model: 'Toyota Camry',
+    chassis_no: 'JTDKBRFU402345678',
+    engine_no: '2AR1234567',
+    seating_capacity: 5,
+    pay_load: 500,
+    total_weight: 1500,
+    horse_power: 203,
+    no_of_cylinder: 4,
+    cc: 2500,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '215/55R17',
+    original_price: 30000,
+    total_price: 35000,
+    delivery_date: new Date('2020-03-15'),
+    bolo_expired_date: new Date('2024-12-31'),
+    supplier_company: 'Toyota Ethiopia',
+    current_km: 45000,
+    last_service_date: new Date('2023-10-15'),
+    next_service_date: new Date('2024-04-15'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AA456B',
+    location: 'City Branch',
+    vehicle_allocation: 'Operations',
+    vehicle_type: 'SUV',
+    body_color: 'Black',
+    manufacturing_year: 2021,
+    vehicle_origin: 'Germany',
+    title_certificate_no: 'TC002',
+    vehicle_model: 'BMW X5',
+    chassis_no: 'WBA1234567890ABCD',
+    engine_no: 'B584567890',
+    seating_capacity: 7,
+    pay_load: 650,
+    total_weight: 2200,
+    horse_power: 335,
+    no_of_cylinder: 6,
+    cc: 3000,
+    drive_type: 'All-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '275/40R20',
+    original_price: 70000,
+    total_price: 80000,
+    delivery_date: new Date('2021-05-20'),
+    bolo_expired_date: new Date('2024-11-30'),
+    supplier_company: 'BMW Addis',
+    current_km: 32000,
+    last_service_date: new Date('2023-11-10'),
+    next_service_date: new Date('2024-05-10'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AB789C',
+    location: 'NRO',
+    vehicle_allocation: 'Field',
+    vehicle_type: 'Pickup',
+    body_color: 'Silver',
+    manufacturing_year: 2019,
+    vehicle_origin: 'USA',
+    title_certificate_no: 'TC003',
+    vehicle_model: 'Ford Ranger',
+    chassis_no: '1FTFX1EF5KK123456',
+    engine_no: 'EcoBoost5678',
+    seating_capacity: 5,
+    pay_load: 1000,
+    total_weight: 2500,
+    horse_power: 270,
+    no_of_cylinder: 4,
+    cc: 2200,
+    drive_type: 'Four-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '265/65R17',
+    original_price: 35000,
+    total_price: 40000,
+    delivery_date: new Date('2019-08-10'),
+    bolo_expired_date: new Date('2024-10-15'),
+    supplier_company: 'Ford Motors',
+    current_km: 78000,
+    last_service_date: new Date('2023-12-05'),
+    next_service_date: new Date('2024-06-05'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AC012D',
+    location: 'Head Office',
+    vehicle_allocation: 'Administration',
+    vehicle_type: 'Minivan',
+    body_color: 'Blue',
+    manufacturing_year: 2022,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC004',
+    vehicle_model: 'Toyota Hiace',
+    chassis_no: 'JTMB1234567890123',
+    engine_no: '1GD1234567',
+    seating_capacity: 12,
+    pay_load: 1200,
+    total_weight: 2800,
+    horse_power: 150,
+    no_of_cylinder: 4,
+    cc: 2700,
+    drive_type: 'Rear-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '195/70R15',
+    original_price: 40000,
+    total_price: 45000,
+    delivery_date: new Date('2022-02-28'),
+    bolo_expired_date: new Date('2025-01-15'),
+    supplier_company: 'Toyota Ethiopia',
+    current_km: 15000,
+    last_service_date: new Date('2023-09-20'),
+    next_service_date: new Date('2024-03-20'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AD345E',
+    location: 'City Branch',
+    vehicle_allocation: 'Sales',
+    vehicle_type: 'Hatchback',
+    body_color: 'Red',
+    manufacturing_year: 2023,
+    vehicle_origin: 'South Korea',
+    title_certificate_no: 'TC005',
+    vehicle_model: 'Hyundai i20',
+    chassis_no: 'MALBB51BLKM123456',
+    engine_no: 'Kappa67890',
+    seating_capacity: 5,
+    pay_load: 400,
+    total_weight: 1200,
+    horse_power: 120,
+    no_of_cylinder: 4,
+    cc: 1400,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '195/55R16',
+    original_price: 18000,
+    total_price: 21000,
+    delivery_date: new Date('2023-01-15'),
+    bolo_expired_date: new Date('2024-12-31'),
+    supplier_company: 'Hyundai Motors',
+    current_km: 8000,
+    last_service_date: new Date('2023-12-01'),
+    next_service_date: new Date('2024-06-01'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AE678F',
+    location: 'NRO',
+    vehicle_allocation: 'Logistics',
+    vehicle_type: 'Truck',
+    body_color: 'Green',
+    manufacturing_year: 2018,
+    vehicle_origin: 'Germany',
+    title_certificate_no: 'TC006',
+    vehicle_model: 'Mercedes Actros',
+    chassis_no: 'WDB96345612345678',
+    engine_no: 'OM47112345',
+    seating_capacity: 3,
+    pay_load: 10000,
+    total_weight: 18000,
+    horse_power: 428,
+    no_of_cylinder: 6,
+    cc: 12800,
+    drive_type: 'Rear-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '295/80R22.5',
+    original_price: 150000,
+    total_price: 170000,
+    delivery_date: new Date('2018-11-30'),
+    bolo_expired_date: new Date('2024-09-30'),
+    supplier_company: 'Mercedes Benz',
+    current_km: 120000,
+    last_service_date: new Date('2023-10-30'),
+    next_service_date: new Date('2024-04-30'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AF901G',
+    location: 'Head Office',
+    vehicle_allocation: 'IT Department',
+    vehicle_type: 'Sedan',
+    body_color: 'Gray',
+    manufacturing_year: 2021,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC007',
+    vehicle_model: 'Honda Accord',
+    chassis_no: '1HGCV12345A123456',
+    engine_no: 'K24W712345',
+    seating_capacity: 5,
+    pay_load: 450,
+    total_weight: 1550,
+    horse_power: 192,
+    no_of_cylinder: 4,
+    cc: 2400,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '235/45R18',
+    original_price: 28000,
+    total_price: 32000,
+    delivery_date: new Date('2021-07-22'),
+    bolo_expired_date: new Date('2024-11-15'),
+    supplier_company: 'Honda Ethiopia',
+    current_km: 38000,
+    last_service_date: new Date('2023-11-25'),
+    next_service_date: new Date('2024-05-25'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AG234H',
+    location: 'City Branch',
+    vehicle_allocation: 'HR Department',
+    vehicle_type: 'SUV',
+    body_color: 'White',
+    manufacturing_year: 2022,
+    vehicle_origin: 'USA',
+    title_certificate_no: 'TC008',
+    vehicle_model: 'Jeep Cherokee',
+    chassis_no: '1C4PJMCB9ND123456',
+    engine_no: 'Tigershark123',
+    seating_capacity: 5,
+    pay_load: 600,
+    total_weight: 1900,
+    horse_power: 271,
+    no_of_cylinder: 4,
+    cc: 2200,
+    drive_type: 'Four-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '225/65R17',
+    original_price: 35000,
+    total_price: 40000,
+    delivery_date: new Date('2022-04-10'),
+    bolo_expired_date: new Date('2025-02-28'),
+    supplier_company: 'Stellantis',
+    current_km: 22000,
+    last_service_date: new Date('2023-12-20'),
+    next_service_date: new Date('2024-06-20'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AH567I',
+    location: 'NRO',
+    vehicle_allocation: 'Field Operations',
+    vehicle_type: 'Pickup',
+    body_color: 'Black',
+    manufacturing_year: 2020,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC009',
+    vehicle_model: 'Toyota Land Cruiser',
+    chassis_no: 'JTMCY123456789012',
+    engine_no: '1VD1234567',
+    seating_capacity: 8,
+    pay_load: 1100,
+    total_weight: 3000,
+    horse_power: 204,
+    no_of_cylinder: 4,
+    cc: 4200,
+    drive_type: 'Four-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '285/65R17',
+    original_price: 85000,
+    total_price: 95000,
+    delivery_date: new Date('2020-06-15'),
+    bolo_expired_date: new Date('2024-08-31'),
+    supplier_company: 'Toyota Ethiopia',
+    current_km: 65000,
+    last_service_date: new Date('2023-10-05'),
+    next_service_date: new Date('2024-04-05'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'AI890J',
+    location: 'Head Office',
+    vehicle_allocation: 'Finance',
+    vehicle_type: 'Sedan',
+    body_color: 'Blue',
+    manufacturing_year: 2023,
+    vehicle_origin: 'Germany',
+    title_certificate_no: 'TC010',
+    vehicle_model: 'Audi A4',
+    chassis_no: 'WAUZZZ8K9NA123456',
+    engine_no: 'EA88812345',
+    seating_capacity: 5,
+    pay_load: 500,
+    total_weight: 1600,
+    horse_power: 201,
+    no_of_cylinder: 4,
+    cc: 2000,
+    drive_type: 'All-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '245/40R18',
+    original_price: 45000,
+    total_price: 52000,
+    delivery_date: new Date('2023-03-01'),
+    bolo_expired_date: new Date('2024-12-31'),
+    supplier_company: 'Audi Center',
+    current_km: 12000,
+    last_service_date: new Date('2023-11-15'),
+    next_service_date: new Date('2024-05-15'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BJ123K',
+    location: 'City Branch',
+    vehicle_allocation: 'Marketing',
+    vehicle_type: 'Convertible',
+    body_color: 'Yellow',
+    manufacturing_year: 2021,
+    vehicle_origin: 'Germany',
+    title_certificate_no: 'TC011',
+    vehicle_model: 'BMW Z4',
+    chassis_no: 'WBA1234567890EFGH',
+    engine_no: 'B584567891',
+    seating_capacity: 2,
+    pay_load: 300,
+    total_weight: 1500,
+    horse_power: 382,
+    no_of_cylinder: 6,
+    cc: 3000,
+    drive_type: 'Rear-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '255/35R19',
+    original_price: 65000,
+    total_price: 72000,
+    delivery_date: new Date('2021-09-10'),
+    bolo_expired_date: new Date('2024-10-31'),
+    supplier_company: 'BMW Addis',
+    current_km: 28000,
+    last_service_date: new Date('2023-12-10'),
+    next_service_date: new Date('2024-06-10'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BJ456L',
+    location: 'NRO',
+    vehicle_allocation: 'Project',
+    vehicle_type: 'Van',
+    body_color: 'White',
+    manufacturing_year: 2019,
+    vehicle_origin: 'Turkey',
+    title_certificate_no: 'TC012',
+    vehicle_model: 'Fiat Ducato',
+    chassis_no: 'ZFA25000001234567',
+    engine_no: 'Multijet1234',
+    seating_capacity: 3,
+    pay_load: 1400,
+    total_weight: 3500,
+    horse_power: 130,
+    no_of_cylinder: 4,
+    cc: 2200,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '215/75R16',
+    original_price: 35000,
+    total_price: 40000,
+    delivery_date: new Date('2019-12-05'),
+    bolo_expired_date: new Date('2024-07-31'),
+    supplier_company: 'Fiat Ethiopia',
+    current_km: 90000,
+    last_service_date: new Date('2023-11-30'),
+    next_service_date: new Date('2024-05-30'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BK789M',
+    location: 'Head Office',
+    vehicle_allocation: 'Legal',
+    vehicle_type: 'Sedan',
+    body_color: 'Black',
+    manufacturing_year: 2022,
+    vehicle_origin: 'Sweden',
+    title_certificate_no: 'TC013',
+    vehicle_model: 'Volvo S90',
+    chassis_no: 'YV1672MK2J2123456',
+    engine_no: 'B4204T231234',
+    seating_capacity: 5,
+    pay_load: 550,
+    total_weight: 1800,
+    horse_power: 316,
+    no_of_cylinder: 4,
+    cc: 2000,
+    drive_type: 'All-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '255/40R19',
+    original_price: 55000,
+    total_price: 62000,
+    delivery_date: new Date('2022-08-20'),
+    bolo_expired_date: new Date('2025-01-31'),
+    supplier_company: 'Volvo Group',
+    current_km: 18000,
+    last_service_date: new Date('2023-10-25'),
+    next_service_date: new Date('2024-04-25'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BL012N',
+    location: 'City Branch',
+    vehicle_allocation: 'Customer Service',
+    vehicle_type: 'MPV',
+    body_color: 'Silver',
+    manufacturing_year: 2021,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC014',
+    vehicle_model: 'Nissan Serena',
+    chassis_no: 'C26-1234567890123',
+    engine_no: 'MR20DD12345',
+    seating_capacity: 8,
+    pay_load: 700,
+    total_weight: 1900,
+    horse_power: 150,
+    no_of_cylinder: 4,
+    cc: 2000,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '205/65R16',
+    original_price: 32000,
+    total_price: 37000,
+    delivery_date: new Date('2021-11-30'),
+    bolo_expired_date: new Date('2024-11-15'),
+    supplier_company: 'Nissan Motors',
+    current_km: 35000,
+    last_service_date: new Date('2023-12-05'),
+    next_service_date: new Date('2024-06-05'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BM345O',
+    location: 'NRO',
+    vehicle_allocation: 'Maintenance',
+    vehicle_type: 'Pickup',
+    body_color: 'Red',
+    manufacturing_year: 2020,
+    vehicle_origin: 'USA',
+    title_certificate_no: 'TC015',
+    vehicle_model: 'Chevrolet Silverado',
+    chassis_no: '1GC12345678901234',
+    engine_no: 'EcoTec31234',
+    seating_capacity: 6,
+    pay_load: 1200,
+    total_weight: 2700,
+    horse_power: 355,
+    no_of_cylinder: 8,
+    cc: 5300,
+    drive_type: 'Four-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '265/70R17',
+    original_price: 50000,
+    total_price: 58000,
+    delivery_date: new Date('2020-04-18'),
+    bolo_expired_date: new Date('2024-09-15'),
+    supplier_company: 'GM Ethiopia',
+    current_km: 58000,
+    last_service_date: new Date('2023-11-18'),
+    next_service_date: new Date('2024-05-18'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BN678P',
+    location: 'Head Office',
+    vehicle_allocation: 'Security',
+    vehicle_type: 'SUV',
+    body_color: 'Black',
+    manufacturing_year: 2022,
+    vehicle_origin: 'South Korea',
+    title_certificate_no: 'TC016',
+    vehicle_model: 'Kia Sorento',
+    chassis_no: 'KNA12345678901234',
+    engine_no: 'ThetaII12345',
+    seating_capacity: 7,
+    pay_load: 650,
+    total_weight: 1950,
+    horse_power: 281,
+    no_of_cylinder: 4,
+    cc: 2400,
+    drive_type: 'All-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '235/60R18',
+    original_price: 38000,
+    total_price: 43000,
+    delivery_date: new Date('2022-02-14'),
+    bolo_expired_date: new Date('2025-02-14'),
+    supplier_company: 'Kia Motors',
+    current_km: 25000,
+    last_service_date: new Date('2023-10-10'),
+    next_service_date: new Date('2024-04-10'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BO901Q',
+    location: 'City Branch',
+    vehicle_allocation: 'Operations',
+    vehicle_type: 'Sedan',
+    body_color: 'Gray',
+    manufacturing_year: 2021,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC017',
+    vehicle_model: 'Mazda 6',
+    chassis_no: 'JM7GG123456789012',
+    engine_no: 'PYVP1234567',
+    seating_capacity: 5,
+    pay_load: 500,
+    total_weight: 1550,
+    horse_power: 187,
+    no_of_cylinder: 4,
+    cc: 2500,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '225/45R19',
+    original_price: 29000,
+    total_price: 34000,
+    delivery_date: new Date('2021-06-30'),
+    bolo_expired_date: new Date('2024-10-31'),
+    supplier_company: 'Mazda Ethiopia',
+    current_km: 42000,
+    last_service_date: new Date('2023-12-25'),
+    next_service_date: new Date('2024-06-25'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BP234R',
+    location: 'NRO',
+    vehicle_allocation: 'Field',
+    vehicle_type: 'Pickup',
+    body_color: 'White',
+    manufacturing_year: 2023,
+    vehicle_origin: 'Japan',
+    title_certificate_no: 'TC018',
+    vehicle_model: 'Mitsubishi L200',
+    chassis_no: 'MMC12345678901234',
+    engine_no: '4N152345678',
+    seating_capacity: 5,
+    pay_load: 1000,
+    total_weight: 2450,
+    horse_power: 181,
+    no_of_cylinder: 4,
+    cc: 2400,
+    drive_type: 'Four-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '265/65R17',
+    original_price: 40000,
+    total_price: 46000,
+    delivery_date: new Date('2023-05-15'),
+    bolo_expired_date: new Date('2024-12-31'),
+    supplier_company: 'Mitsubishi Motors',
+    current_km: 7000,
+    last_service_date: new Date('2023-11-05'),
+    next_service_date: new Date('2024-05-05'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BQ567S',
+    location: 'Head Office',
+    vehicle_allocation: 'Management',
+    vehicle_type: 'Luxury Sedan',
+    body_color: 'Black',
+    manufacturing_year: 2022,
+    vehicle_origin: 'Germany',
+    title_certificate_no: 'TC019',
+    vehicle_model: 'Mercedes S-Class',
+    chassis_no: 'WDD22345678901234',
+    engine_no: 'M256123456',
+    seating_capacity: 5,
+    pay_load: 600,
+    total_weight: 2100,
+    horse_power: 429,
+    no_of_cylinder: 6,
+    cc: 3000,
+    drive_type: 'All-Wheel Drive',
+    fuel_type: 'Petrol',
+    tyre_size: '255/40R20',
+    original_price: 110000,
+    total_price: 125000,
+    delivery_date: new Date('2022-10-10'),
+    bolo_expired_date: new Date('2025-03-31'),
+    supplier_company: 'Mercedes Benz',
+    current_km: 15000,
+    last_service_date: new Date('2023-12-15'),
+    next_service_date: new Date('2024-06-15'),
+    file_uploads: []
+  },
+  {
+    plate_no: 'BR890T',
+    location: 'City Branch',
+    vehicle_allocation: 'Delivery',
+    vehicle_type: 'Minivan',
+    body_color: 'Blue',
+    manufacturing_year: 2020,
+    vehicle_origin: 'France',
+    title_certificate_no: 'TC020',
+    vehicle_model: 'Peugeot Traveller',
+    chassis_no: 'VF3***************',
+    engine_no: 'DV6R123456',
+    seating_capacity: 9,
+    pay_load: 800,
+    total_weight: 2300,
+    horse_power: 120,
+    no_of_cylinder: 4,
+    cc: 1600,
+    drive_type: 'Front-Wheel Drive',
+    fuel_type: 'Diesel',
+    tyre_size: '205/65R16',
+    original_price: 35000,
+    total_price: 41000,
+    delivery_date: new Date('2020-09-25'),
+    bolo_expired_date: new Date('2024-08-15'),
+    supplier_company: 'Peugeot Ethiopia',
+    current_km: 72000,
+    last_service_date: new Date('2023-10-20'),
+    next_service_date: new Date('2024-04-20'),
+    file_uploads: []
+  }
+];
+
+// Sample foreclosure vehicle data
+const sampleForeclosureVehicles = [
+  {
+    plate_no: 'FC001A',
+    property_owner: 'John Doe',
+    lender_branch: 'Main Branch',
+    parking_place: 'Head Office Parking Lot A',
+    date_into: new Date('2023-01-15'),
+    date_out: null
+  },
+  {
+    plate_no: 'FC002B',
+    property_owner: 'Jane Smith',
+    lender_branch: 'City Branch',
+    parking_place: 'City Branch Backyard',
+    date_into: new Date('2023-02-20'),
+    date_out: new Date('2023-08-15')
+  },
+  {
+    plate_no: 'FC003C',
+    property_owner: 'Mike Johnson',
+    lender_branch: 'NRO Branch',
+    parking_place: 'NRO Secure Yard',
+    date_into: new Date('2023-03-10'),
+    date_out: null
+  },
+  {
+    plate_no: 'FC004D',
+    property_owner: 'Sarah Williams',
+    lender_branch: 'Head Office',
+    parking_place: 'Main Garage',
+    date_into: new Date('2023-04-05'),
+    date_out: new Date('2023-11-30')
+  },
+  {
+    plate_no: 'FC005E',
+    property_owner: 'Robert Brown',
+    lender_branch: 'City Branch',
+    parking_place: 'City Branch Parking B',
+    date_into: new Date('2023-05-22'),
+    date_out: null
+  },
+  {
+    plate_no: 'FC006F',
+    property_owner: 'Emily Davis',
+    lender_branch: 'Main Branch',
+    parking_place: 'Head Office Secure Lot',
+    date_into: new Date('2023-06-18'),
+    date_out: new Date('2023-12-10')
+  },
+  {
+    plate_no: 'FC007G',
+    property_owner: 'David Wilson',
+    lender_branch: 'NRO Branch',
+    parking_place: 'Field Office Yard',
+    date_into: new Date('2023-07-30'),
+    date_out: null
+  },
+  {
+    plate_no: 'FC008H',
+    property_owner: 'Lisa Martinez',
+    lender_branch: 'City Branch',
+    parking_place: 'City Branch Side Lot',
+    date_into: new Date('2023-08-12'),
+    date_out: new Date('2024-01-20')
+  },
+  {
+    plate_no: 'FC009I',
+    property_owner: 'James Taylor',
+    lender_branch: 'Main Branch',
+    parking_place: 'Head Office Back Lot',
+    date_into: new Date('2023-09-25'),
+    date_out: null
+  },
+  {
+    plate_no: 'FC010J',
+    property_owner: 'Maria Garcia',
+    lender_branch: 'NRO Branch',
+    parking_place: 'Remote Storage Yard',
+    date_into: new Date('2023-10-08'),
+    date_out: new Date('2024-02-15')
+  }
+];
+
+// Function to seed vehicles
+const seedVehicles = async () => {
+  try {
+    console.log('🚗 Starting vehicle seeding...');
+    
+    // Clear existing vehicles (optional - remove if you want to keep existing data)
+    await Vehicle.deleteMany({});
+    console.log('🗑️  Cleared existing vehicles');
+    
+    // Insert new vehicles
+    const insertedVehicles = await Vehicle.insertMany(sampleVehicles);
+    console.log(`✅ Successfully seeded ${insertedVehicles.length} vehicles`);
+    
+    return insertedVehicles;
+  } catch (error) {
+    console.error('❌ Error seeding vehicles:', error);
+    throw error;
+  }
+};
+
+// Function to seed foreclosure vehicles
+const seedForeclosureVehicles = async () => {
+  try {
+    console.log('🏦 Starting foreclosure vehicle seeding...');
+    
+    // Clear existing foreclosure vehicles (optional)
+    await ForeclosureVehicle.deleteMany({});
+    console.log('🗑️  Cleared existing foreclosure vehicles');
+    
+    // Insert new foreclosure vehicles
+    const insertedForeclosureVehicles = await ForeclosureVehicle.insertMany(sampleForeclosureVehicles);
+    console.log(`✅ Successfully seeded ${insertedForeclosureVehicles.length} foreclosure vehicles`);
+    
+    return insertedForeclosureVehicles;
+  } catch (error) {
+    console.error('❌ Error seeding foreclosure vehicles:', error);
+    throw error;
+  }
+};
+
+// Main function to run the seeding
+const runSeeding = async () => {
+  try {
+    await connectDB();
+    
+    // Seed vehicles
+    await seedVehicles();
+    
+    // Seed foreclosure vehicles
+    await seedForeclosureVehicles();
+    
+    console.log('\n🎉 Seeding completed successfully!');
+    console.log('📊 Summary:');
+    console.log(`   • Vehicles: ${sampleVehicles.length}`);
+    console.log(`   • Foreclosure Vehicles: ${sampleForeclosureVehicles.length}`);
+    
+    // Disconnect from MongoDB
+    await mongoose.disconnect();
+    console.log('🔌 Disconnected from MongoDB');
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('💥 Seeding failed:', error);
+    process.exit(1);
+  }
+};
+
+// Run the seeding script
+runSeeding();
