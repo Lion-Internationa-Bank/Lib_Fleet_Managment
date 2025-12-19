@@ -1,55 +1,93 @@
 // backend/src/validators/maintenanceValidator.js
 import { z } from 'zod';
 
+
+const sparePartSchema = z.object({
+  part: z.string().min(1).trim(),
+
+  service_type: z.enum([
+    'replace',
+    'clean',
+    'repair',
+    'inspect and clean',
+    'inspect',
+    'rotation',
+    'lubricate and clean',
+  ]),
+
+  cost: z.number().min(0),
+
+  service_provider: z.string().min(1).trim(),
+
+  inspected_by: z.string().min(1).trim(),
+
+  mileage: z.number().min(0),
+});
+
 export const createVehicleMaintenanceSchema = z.object({
   body: z.object({
     plate_no: z.string().trim().min(3).max(20).toUpperCase(),
-    workshop_name: z.string().optional(),
+
+    workshop_name: z.string().trim().optional(),
+
     invoice_no: z.string().min(1).trim().toUpperCase(),
+
     location: z.string().min(1).trim(),
-    maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']),
+
+    maintenance_type: z.enum([
+      'Preventive',
+      'Corrective',
+      'Breakdown',
+      'Body & Paint',
+    ]),
+
     labour_cost: z.number().min(0).default(0),
-    replaced_spare_part: z
-      .array(
-        z.object({
-          part: z.string().min(1),
-          cost: z.number().min(0),
-        })
-      )
-      .optional(),
-    km_at_service: z.number().min(0).optional(),
+
+    spare_part: z.array(sparePartSchema).optional(),
+
+    km_at_service: z.number().min(0),
+
     date_in: z.coerce.date(),
+
     date_out: z.coerce.date().optional(),
-    remark: z.string().optional(),
+
+    remark: z.string().trim().optional(),
   }),
 });
 
-// export const updateVehicleMaintenanceSchema = createVehicleMaintenanceSchema.partial();
 export const updateVehicleMaintenanceSchema = z.object({
-  body: z.object({
-    plate_no: z.string().trim().min(3).max(20).toUpperCase().optional(),
-    workshop_name: z.string().optional(),
-    invoice_no: z.string().min(1).trim().toUpperCase().optional(),
-    location: z.string().min(1).trim().optional(),
-    maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']).optional(),
-    labour_cost: z.number().min(0).default(0).optional(),
-    replaced_spare_part: z
-      .array(
-        z.object({
-          part: z.string().min(1),
-          cost: z.number().min(0),
-        })
-      )
-      .optional(),
-    km_at_service: z.number().min(0).optional(),
-    date_in: z.coerce.date().optional(),
-    date_out: z.coerce.date().optional(),
-    remark: z.string().optional(),
-  }) .refine((data) => Object.keys(data).length > 0, {
-    message: "Request body cannot be empty for update",
-    path: [], // This shows error at root level
-  }),
+  body: z
+    .object({
+      plate_no: z.string().trim().min(3).max(20).toUpperCase().optional(),
+
+      workshop_name: z.string().trim().optional(),
+
+      invoice_no: z.string().min(1).trim().toUpperCase().optional(),
+
+      location: z.string().min(1).trim().optional(),
+
+      maintenance_type: z
+        .enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint'])
+        .optional(),
+
+      labour_cost: z.number().min(0).optional(),
+
+      spare_part: z.array(sparePartSchema).optional(),
+
+      km_at_service: z.number().min(0).optional(),
+
+      date_in: z.coerce.date().optional(),
+
+      date_out: z.coerce.date().optional(),
+
+      remark: z.string().trim().optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: 'Request body cannot be empty for update',
+      path: [],
+    }),
 });
+
 
 export const createGeneratorServiceSchema = z.object({
   body: z.object({

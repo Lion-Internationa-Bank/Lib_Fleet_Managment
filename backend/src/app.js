@@ -11,7 +11,7 @@ import compression from 'compression';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Import your routes (uncomment when files exist)
+// Import your routes 
 // import authRoutes from './routes/authRoutes.js';
 import vehicleRoutes from './routes/vehicleRoutes.js';
 import generatorRoutes from './routes/generatorRoutes.js'
@@ -21,8 +21,8 @@ import trakingRoutes from './routes/trackingRoutes.js'
 import agreementRoutes from './routes/agreementRoutes.js'
 import insuranceRoutes from "./routes/insuranceRoutes.js";
 import  reportRoutes from './routes/reportRoutes.js';
-// import reportRoutes from './routes/reportRoutes.js';
-// import otherRoutes from './routes/otherRoutes.js'; // add more later
+import tireRoutes from './routes/tireRoutes.js';
+
 
 import errorHandler from './middleware/errorHandler.js';
 
@@ -78,11 +78,11 @@ app.use('/api/v1/generators', generatorRoutes);
 app.use('/api/v1/tracking',trakingRoutes)
 app.use('/api/v1/agreements',agreementRoutes)
 app.use("/api/v1/insurance", insuranceRoutes);
+app.use('/api/v1/tires', tireRoutes);
 app.use("/api/v1/reports",  reportRoutes)
 
 
-// app.use('/api/v1/reports', reportRoutes);
-// app.use('/api/v1/other', otherRoutes);
+
 
 // Add a test route to verify routing is working
 app.get('/api/v1/test', (req, res) => {
