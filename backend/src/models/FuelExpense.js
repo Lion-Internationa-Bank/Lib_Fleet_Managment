@@ -15,7 +15,7 @@ const FuelExpenseSchema = new mongoose.Schema(
     fuel_type: {
       type: String,
       required: true,
-      enum: ['Diesel', 'Benzene', 'Octane'],
+      enum: ['Diesel', 'Regular', 'Octane'],
     },
 
     // USER FILLS 

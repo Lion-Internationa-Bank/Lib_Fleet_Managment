@@ -30,7 +30,7 @@ const VehicleSchema = new mongoose.Schema({
     fuel_type: {
       type: String,
       required: true,
-      enum: ['Diesel', 'Benzene', 'Octane'],
+      enum: ['Diesel', 'Regular', 'Octane'],
     },
   tyre_size: { type: String, required: true },
   original_price: Number,

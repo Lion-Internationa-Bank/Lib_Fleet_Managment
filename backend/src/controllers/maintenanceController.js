@@ -23,7 +23,7 @@ export const createVehicleMaintenance = catchAsync(async (req, res, next) => {
     ...req.body,
     plate_no: plateNo,
     vehicle_type: vehicle.vehicle_type,    
-    location:vehicle.location,      
+    location:vehicle.vehicle_allocation,      
     km_at_service: req.body.km_at_service,
             
   });
@@ -369,3 +369,8 @@ export const updateGeneratorService = catchAsync(async (req, res, next) => {
     data: service,
   });
 });
+
+
+
+
+
