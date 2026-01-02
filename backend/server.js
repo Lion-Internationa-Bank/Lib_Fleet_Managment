@@ -3,6 +3,7 @@ import 'dotenv/config';
 import './src/config/database.js'; // Connect DB first
 import app from './src/app.js';
 import { createServer } from 'http';
+import syncReminders from './src/jobs/reminderSync.js';
 // import { setupWebSocket } from './src/utils/websocket.js'; // optional real-time
 
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,12 @@ const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
   console.log(`LIB FMS Backend running on PORT ${PORT}`);
   console.log(`http://localhost:${PORT}`);
+
+  // Run reminder sync immediately on startup
+  syncReminders();
+
+  // Optional: log next run
+  console.log('Reminder sync scheduled daily at 11:30 PM EAT');
 });
 
 // Graceful shutdown

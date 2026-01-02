@@ -10,9 +10,9 @@ export const createInsuranceSchema = z.object({
 
 export const updateInsuranceSchema = z.object({
    body: z.object({
-    insurance_provider: z.string().min(1, "Insurance provider is required").optional(),
-    insurance_renewal_date: z.coerce.date().optional(),
-    insurance_expired_date: z.coerce.date().optional(),
+    insurance_provider: z.string().min(1, "Insurance provider is required").optional().nullable(),
+    insurance_renewal_date: z.coerce.date().optional().nullable(),
+    insurance_expired_date: z.coerce.date().optional().nullable(),
   
   }),
   params: z.object({

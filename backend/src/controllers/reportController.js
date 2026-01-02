@@ -2637,3 +2637,438 @@ if (format.toLowerCase() === 'word') {
 
 
 });
+
+
+
+export const generateGeneratorMaintenanceReport = catchAsync(async (req, res) => {
+  const { format = 'excel', period, startDate, endDate } = req.query;
+
+  if (!['excel', 'pdf', 'word'].includes(format.toLowerCase())) {
+    return res.status(400).json({ success: false, message: 'Format must be excel, pdf, or word' });
+  }
+
+  let dateQuery, titleSuffix;
+  try {
+    ({ query: dateQuery, titleSuffix } = getDateRange(period, startDate, endDate));
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+
+  const filename = `Generator_Maintenance_Report_${titleSuffix.replace(/[/]/g, '-')}`;
+
+  const services = await GeneratorService.find({ service_date: dateQuery })
+    .populate('generatorId', 'capacity')
+    .sort({ allocation: 1, service_date: -1 })
+    .lean();
+
+  if (services.length === 0) {
+    return res.status(404).json({ success: false, message: 'No generator maintenance records found' });
+  }
+
+  const enrichedServices = services.map((service, index) => ({
+    sn: index + 1,
+    branch: service.allocation || 'N/A',
+    hour_meter_reading: service.hour_meter_reading || 'N/A',
+    next_service_hour: service.next_service_hour || 'N/A',
+    capacity: service.generatorId?.capacity || 'N/A',
+    maintenance_type: service.maintenance_type || 'N/A', // Now before description
+    description: service.description || 'N/A',
+    work_done_by: service.service_provider || 'N/A',
+    service_date: service.service_date ? new Date(service.service_date).toLocaleDateString('en-GB') : 'N/A',
+    cost: service.cost || 0,
+    status: service.status || 'N/A',
+  }));
+
+  const totalCost = enrichedServices.reduce((sum, s) => sum + s.cost, 0);
+
+  // Updated column order: Maintenance Type before Description
+  const columns = [
+    { header: 'S.N', key: 'sn', width: 8 },
+    { header: 'Branch', key: 'branch', width: 25 },
+    { header: 'Hour Meter Reading', key: 'hour_meter_reading', width: 20 },
+    { header: 'Next Service Hour', key: 'next_service_hour', width: 20 },
+    { header: 'Capacity', key: 'capacity', width: 15 },
+    { header: 'Maintenance Type', key: 'maintenance_type', width: 25 }, // Moved here
+    { header: 'Description', key: 'description', width: 40 },
+    { header: 'Work Done By', key: 'work_done_by', width: 25 },
+    { header: 'Service Date', key: 'service_date', width: 18 },
+    { header: 'Cost', key: 'cost', width: 15 },
+    { header: 'Status', key: 'status', width: 15 },
+  ];
+
+  if (format.toLowerCase() === 'excel') {
+    let buffer = await generateExcelReport([], columns, 'Generator Maintenance Report', { groupBy: null });
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.getWorksheet('Generator Maintenance Report');
+
+    let rowIndex = 1;
+
+    worksheet.mergeCells(`A${rowIndex}:K${rowIndex}`);
+    worksheet.getCell(`A${rowIndex}`).value = 'GENERATOR MAINTENANCE REPORT';
+    worksheet.getCell(`A${rowIndex}`).font = { size: 18, bold: true };
+    worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
+    rowIndex++;
+
+    worksheet.mergeCells(`A${rowIndex}:K${rowIndex}`);
+    worksheet.getCell(`A${rowIndex}`).value = `Period: ${titleSuffix}`;
+    worksheet.getCell(`A${rowIndex}`).font = { size: 14 };
+    worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
+    rowIndex += 2;
+
+    const headerRow = worksheet.getRow(rowIndex);
+    headerRow.values = columns.map(col => col.header);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } };
+    headerRow.alignment = { horizontal: 'center', wrapText: true };
+    rowIndex++;
+
+    enrichedServices.forEach(s => {
+      worksheet.addRow([
+        s.sn,
+        s.branch,
+        s.hour_meter_reading,
+        s.next_service_hour,
+        s.capacity,
+        s.maintenance_type,
+        s.description,
+        s.work_done_by,
+        s.service_date,
+        s.cost.toFixed(2),
+        s.status,
+      ]);
+      rowIndex++;
+    });
+
+    worksheet.addRow([
+      'TOTAL COST',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      totalCost.toFixed(2),
+      '',
+      '',
+    ]).font = { bold: true, color: { argb: 'FF0000' } };
+
+    buffer = await workbook.xlsx.writeBuffer();
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
+    }).send(buffer);
+    return;
+  }
+
+if (format.toLowerCase() === 'pdf') {
+  const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
+  res.set({ 
+    'Content-Type': 'application/pdf', 
+    'Content-Disposition': `attachment; filename="${filename}.pdf"` 
+  });
+  doc.pipe(res);
+
+  doc.fontSize(24).font('Helvetica-Bold').text('GENERATOR MAINTENANCE REPORT', { align: 'center' });
+  doc.fontSize(16).text(`Period: ${titleSuffix}`, { align: 'center' });
+  doc.moveDown(2);
+
+  const headers = ['S.N', 'Branch', 'Hour Meter', 'Next Service', 'Capacity', 'Maint. Type', 'Description', 'Done By', 'Service Date', 'Cost', 'Status'];
+  // Optimized for A4 landscape (usable width ~730 pixels from x=30 to x=760)
+  const colWidths = [40, 70, 65, 65, 60, 75, 130, 75, 70, 60, 60];
+
+  let y = doc.y;
+  let x = 30;
+
+  // Header row
+  doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF');
+  headers.forEach((h, i) => {
+    doc.fillColor('#4F81BD').rect(x, y, colWidths[i], 30).fill();
+    doc.fillColor('#FFFFFF').text(h, x + 3, y + 8, { width: colWidths[i] - 6, align: 'center', fontSize: 8 });
+    x += colWidths[i];
+  });
+  y += 35;
+
+  doc.font('Helvetica').fontSize(8).fillColor('black');
+
+  // Data rows
+  enrichedServices.forEach(s => {
+    x = 30;
+    const row = [
+      String(s.sn),
+      String(s.branch),
+      String(s.hour_meter_reading),
+      String(s.next_service_hour),
+      String(s.capacity),
+      String(s.maintenance_type),
+      String(s.description),
+      String(s.work_done_by),
+      String(s.service_date),
+      Number(s.cost).toFixed(2),
+      String(s.status),
+    ];
+
+    const maxHeight = row.reduce((max, cell, i) => {
+      const h = doc.heightOfString(cell, { width: colWidths[i] - 6 });
+      return Math.max(max, h);
+    }, 18);
+    const rowHeight = maxHeight + 8;
+
+    row.forEach((cell, i) => {
+      doc.text(cell, x + 3, y + 3, { 
+        width: colWidths[i] - 6, 
+        align: (i === 9) ? 'right' : 'left',
+        fontSize: 8
+      });
+      x += colWidths[i];
+    });
+
+    // Row border
+    doc.moveTo(30, y + rowHeight).lineTo(760, y + rowHeight).stroke('#EEEEEE');
+    y += rowHeight;
+
+    // Page break
+    if (y > 520) {
+      doc.addPage();
+      y = 50;
+    }
+  });
+
+  // Total cost with proper positioning
+  y += 15;
+  doc.fontSize(11).font('Helvetica-Bold').text(`Total Cost: ${Number(totalCost).toFixed(2)}`, 30, y);
+
+  doc.end();
+  return;
+}
+
+
+if (format.toLowerCase() === 'word') {
+  const headers = ['S.N', 'Branch', 'Hour Meter Reading', 'Next Service Hour', 'Capacity', 'Maintenance Type', 'Description', 'Work Done By', 'Service Date', 'Cost', 'Status'];
+
+  const cleanText = (v) =>
+    v === null || v === undefined
+      ? ''
+      : v.toString().replace(/\s+/g, ' ').trim();
+
+  const children = [
+    new Paragraph({
+      text: 'GENERATOR MAINTENANCE REPORT',
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 300 },
+    }),
+    new Paragraph({
+      text: `Period: ${titleSuffix}`,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 500 },
+    }),
+    new Paragraph({ text: '' }),
+  ];
+
+  const tableRows = [];
+
+  // Header row
+  const headerRow = new TableRow({
+    children: headers.map((h) =>
+      new TableCell({
+        children: [
+          new Paragraph({
+            text: h,
+            bold: true,
+            alignment: AlignmentType.CENTER,
+          }),
+        ],
+        shading: { fill: 'D9E8F7' },
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      })
+    ),
+    tableHeader: true,
+  });
+  tableRows.push(headerRow);
+
+  // Data rows
+  enrichedServices.forEach((s, index) => {
+    const cells = [
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.sn), alignment: AlignmentType.CENTER })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.branch), alignment: AlignmentType.LEFT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.hour_meter_reading), alignment: AlignmentType.RIGHT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.next_service_hour), alignment: AlignmentType.RIGHT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.capacity), alignment: AlignmentType.CENTER })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.maintenance_type), alignment: AlignmentType.LEFT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.description), alignment: AlignmentType.LEFT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.work_done_by), alignment: AlignmentType.LEFT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.service_date), alignment: AlignmentType.CENTER })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(Number(s.cost).toFixed(2)), alignment: AlignmentType.RIGHT })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+      new TableCell({
+        children: [new Paragraph({ text: cleanText(s.status), alignment: AlignmentType.CENTER })],
+        verticalAlign: VerticalAlign.CENTER,
+        margins: { top: 150, bottom: 150, left: 150, right: 150 },
+      }),
+    ];
+
+    if (index % 2 !== 0) {
+      cells.forEach((cell) => {
+        cell.shading = { fill: 'F2F2F2' };
+      });
+    }
+
+    tableRows.push(new TableRow({ children: cells }));
+  });
+
+  // Total row
+  const totalRowCells = [
+    new TableCell({
+      children: [new Paragraph({ text: 'TOTAL COST', bold: true, alignment: AlignmentType.CENTER })],
+      shading: { fill: 'D9E8F7' },
+      verticalAlign: VerticalAlign.CENTER,
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: cleanText(Number(totalCost).toFixed(2)), bold: true, alignment: AlignmentType.RIGHT })],
+      shading: { fill: 'D9E8F7' },
+      verticalAlign: VerticalAlign.CENTER,
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+    new TableCell({
+      children: [new Paragraph({ text: '' })],
+      shading: { fill: 'D9E8F7' },
+      margins: { top: 150, bottom: 150, left: 150, right: 150 },
+    }),
+  ];
+  tableRows.push(new TableRow({ children: totalRowCells }));
+
+  // Column widths for A4 landscape (11 columns)
+  const columnWidths = [700, 1300, 1300, 1300, 1000, 1400, 1800, 1400, 1300, 1200, 1200];
+
+  const table = new Table({
+    rows: tableRows,
+    width: { size: 15000, type: WidthType.DXA },
+    columnWidths,
+    margins: {
+      top: 300,
+      bottom: 300,
+      left: 500,
+      right: 700,
+    },
+  });
+
+  children.push(table);
+
+  const docx = new Document({
+    sections: [
+      {
+        children,
+        properties: {
+          page: {
+            margin: {
+              top: 1200,
+              right: 1400,
+              bottom: 1200,
+              left: 1400,
+            },
+            size: {
+              width: 16838,
+              height: 11906,
+              orientation: PageOrientation.LANDSCAPE,
+            },
+          },
+        },
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(docx);
+  res
+    .set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="${filename}.docx"`,
+    })
+    .send(buffer);
+}
+
+});

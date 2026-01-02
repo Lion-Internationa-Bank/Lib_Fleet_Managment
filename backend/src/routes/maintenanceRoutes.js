@@ -37,7 +37,6 @@ router.get('/vehicles/history/:plateNo', getVehicleMaintenanceHistory);
 
 
 
-
 // ==================== GENERATOR MAINTENANCE ====================
 router
   .route('/generators')

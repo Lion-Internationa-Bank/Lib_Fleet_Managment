@@ -22,6 +22,7 @@ import agreementRoutes from './routes/agreementRoutes.js'
 import insuranceRoutes from "./routes/insuranceRoutes.js";
 import  reportRoutes from './routes/reportRoutes.js';
 import tireRoutes from './routes/tireRoutes.js';
+import reminderRoutes from './routes/reminderRoutes.js';
 
 
 import errorHandler from './middleware/errorHandler.js';
@@ -80,6 +81,7 @@ app.use('/api/v1/agreements',agreementRoutes)
 app.use("/api/v1/insurance", insuranceRoutes);
 app.use('/api/v1/tires', tireRoutes);
 app.use("/api/v1/reports",  reportRoutes)
+app.use('/api/v1/reminders', reminderRoutes);
 
 
 

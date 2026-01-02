@@ -1,63 +1,159 @@
-# =============================================
-# LIB FLEET MANAGEMENT SYSTEM – MONOREPO .gitignore
-# Works perfectly for /backend + /frontend (Vite + React)
-# =============================================
+# Logs and temporary files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*# Logs and runtime files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# Node.js / Backend
-backend/node_modules/
-backend/.env
-backend/.env.*
-backend/npm-debug.log*
-backend/dist/
-backend/build/
-backend/uploads/
-backend/temp/
-backend/tmp/
+# Build outputs
+dist/
+build/
+out/
 
-# React / Vite Frontend
-frontend/node_modules/
-frontend/.env
-frontend/.env.*
-frontend/dist/
-frontend/build/
-frontend/.vite/
+# Dependencies
+node_modules/
 
-# Editor & OS
+# Environment variables (never commit secrets!)
+.env
+.env.local
+.env.development
+.env.production
+.env.*
+!.env.example
+
+# Editor/IDE files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
 Thumbs.db
-.idea/
+ehthumbs.db
+Desktop.ini
+
+# Cache files
+.npm
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Vite cache (frontend)
+.vite/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Local MongoDB data (if you run mongod locally inside the project)
+data/
+db/
+journal/
+mongod.lock
+
+# Database dumps / backups
+*.dump
+*.sql
+*.bak
+
+# Archives and temp files
+*.tgz
+*.zip
+*.rar
+*.tmp
+*.temp
+
+# Node REPL history
+.node_repl_history
+
+# Optional: old package managers
+bower_components/
+jspm_packages/
+
+# Backend-specific (Node.js + Express + MongoDB)
+backend/dist/
+backend/node_modules/          # Extra safety (root node_modules/ already covers)
+backend/coverage/
+backend/.nyc_output/
+
+# Frontend-specific (React + Vite + Tailwind + TypeScript)
+frontend/dist/
+frontend/build/
+frontend/node_modules/         # Extra safety
+frontend/.vite/
+frontend/coverage/
+frontend/*.tsbuildinfo
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic reports (Node.js)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Build outputs
+dist/
+build/
+out/
+*.local
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+jspm_packages/
+web_modules/  # Snowpack
+
+# Environment variables (critical - never commit secrets!)
+.env
+.env.local
+.env.development
+.env.production
+.env.*
+!.env.example
+
+# Editor/IDE files
 .vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 *.swp
 *.swo
 *~
 
-# Logs
-*.log
-logs/
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log
-
-# Cache
-.cache/
+# Cache files
+.npm
 .eslintcache
 .stylelintcache
+*.tsbuildinfo  # TypeScript cache (if using TS in backend)
 
-# Build outputs
-/dist/
-/build/
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
 
-# Local uploads (CRITICAL – NEVER commit real vehicle documents!)
-uploads/
-public/uploads/
-storage/
-
-# Optional: if you use Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
-
-# Security
-*.pem
-*.key
-*.crt
+# Local MongoDB data (if running mongod locally in project)

@@ -1,4 +1,4 @@
-// seen
+
 // GeneratorService.js
 import mongoose from "mongoose";
 const GeneratorServiceSchema = new mongoose.Schema({
@@ -6,6 +6,11 @@ const GeneratorServiceSchema = new mongoose.Schema({
   allocation: String,
   hour_meter_reading: Number,
   next_service_hour: Number,
+  maintenance_type: {
+    type: String,
+    enum: ['Preventive', 'Corrective', 'Breakdown', 'Body & Paint'],
+    required: true,
+  },
   maintenance_type: String,
   description: String,
   service_provider: String,                                                             
