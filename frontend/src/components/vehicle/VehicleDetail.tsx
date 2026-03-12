@@ -1,13 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VehicleDetail as VehicleDetailType } from '../../types/vehicle';
+import { vehicleService } from '../../services/vehicle.service';
+import { toast } from 'sonner';
+import { AddVehicleModal } from './AddVehicleModal';
 
 interface VehicleDetailProps {
   vehicle: VehicleDetailType | null;
   loading: boolean;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, onClose }) => {
+export const VehicleDetail: React.FC<VehicleDetailProps> = ({ 
+  vehicle, 
+  loading, 
+  onClose,
+  onUpdate 
+}) => {
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [editingCompliance, setEditingCompliance] = useState(false);
+  const [showFullEditModal, setShowFullEditModal] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  
+  // Location form state
+  const [locationForm, setLocationForm] = useState({
+    location: vehicle?.location || '',
+    vehicle_allocation: vehicle?.vehicle_allocation || ''
+  });
+
+  // Compliance form state
+  const [complianceForm, setComplianceForm] = useState({
+    bolo_expired_date: vehicle?.bolo_expired_date?.split('T')[0] || ''
+  });
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -17,17 +42,52 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
     });
   };
 
+  const handleLocationUpdate = async () => {
+    if (!vehicle) return;
+    
+    setUpdating(true);
+    try {
+      const response = await vehicleService.updateVehicleLocation(vehicle.plate_no, locationForm);
+      toast.success(response.message);
+      if (onUpdate) onUpdate();
+      setEditingLocation(false);
+    } catch (error) {
+      console.error('Failed to update location:', error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleComplianceUpdate = async () => {
+    if (!vehicle) return;
+    
+    setUpdating(true);
+    try {
+      const response = await vehicleService.updateVehicleCompliance(vehicle.plate_no, complianceForm);
+      toast.success(response.message);
+      if (onUpdate) onUpdate();
+      setEditingCompliance(false);
+    } catch (error) {
+      console.error('Failed to update compliance:', error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleFullUpdateSuccess = () => {
+    if (onUpdate) onUpdate();
+    setShowFullEditModal(false);
+  };
+
   if (!vehicle && !loading) return null;
 
   return (
     <>
       {/* Overlay */}
-      {vehicle && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={onClose}
-        />
-      )}
+      <div 
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onClose}
+      />
       
       {/* Sidebar */}
       <div className={`
@@ -38,12 +98,20 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
         {/* Header */}
         <div className="sticky top-0 bg-white z-10 px-6 py-5 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">Vehicle Details</h2>
-          <button
-            onClick={onClose}
-            className="text-2xl px-3 py-1 rounded hover:bg-gray-100 transition-colors"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFullEditModal(true)}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Full Edit
+            </button>
+            <button
+              onClick={onClose}
+              className="text-2xl px-3 py-1 rounded hover:bg-gray-100 transition-colors"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -69,16 +137,138 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
                       <td className="py-2 text-gray-600">Type</td>
                       <td className="py-2">{vehicle.vehicle_type}</td>
                     </tr>
-                    <tr>
-                      <td className="py-2 text-gray-600">Location</td>
-                      <td className="py-2">{vehicle.location}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 text-gray-600">Allocation</td>
-                      <td className="py-2">{vehicle.vehicle_allocation}</td>
-                    </tr>
                   </tbody>
                 </table>
+              </div>
+
+              {/* Location & Allocation - Editable */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-base font-semibold text-gray-800">Location & Allocation</h3>
+                  {!editingLocation && (
+                    <button
+                      onClick={() => {
+                        setLocationForm({
+                          location: vehicle.location,
+                          vehicle_allocation: vehicle.vehicle_allocation
+                        });
+                        setEditingLocation(true);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {editingLocation ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Location</label>
+                      <input
+                        type="text"
+                        value={locationForm.location}
+                        onChange={(e) => setLocationForm(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Allocation</label>
+                      <input
+                        type="text"
+                        value={locationForm.vehicle_allocation}
+                        onChange={(e) => setLocationForm(prev => ({ ...prev, vehicle_allocation: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleLocationUpdate}
+                        disabled={updating}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {updating ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => setEditingLocation(false)}
+                        className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <table className="w-full">
+                    <tbody>
+                      <tr>
+                        <td className="py-2 text-gray-600 w-2/5">Location</td>
+                        <td className="py-2 font-medium">{vehicle.location}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-600">Allocation</td>
+                        <td className="py-2">{vehicle.vehicle_allocation}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Compliance - Editable */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-base font-semibold text-gray-800">Compliance</h3>
+                  {!editingCompliance && (
+                    <button
+                      onClick={() => {
+                        setComplianceForm({
+                          bolo_expired_date: vehicle.bolo_expired_date?.split('T')[0] || ''
+                        });
+                        setEditingCompliance(true);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {editingCompliance ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">BOLO Expiry Date</label>
+                      <input
+                        type="date"
+                        value={complianceForm.bolo_expired_date}
+                        onChange={(e) => setComplianceForm({ bolo_expired_date: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleComplianceUpdate}
+                        disabled={updating}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {updating ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => setEditingCompliance(false)}
+                        className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <table className="w-full">
+                    <tbody>
+                      <tr>
+                        <td className="py-2 text-gray-600 w-2/5">BOLO Expiry</td>
+                        <td className="py-2 font-medium">{formatDate(vehicle.bolo_expired_date)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
               </div>
 
               {/* Technical Specifications */}
@@ -149,23 +339,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
                 </table>
               </div>
 
-              {/* Weight & Capacity */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Weight & Capacity</h3>
-                <table className="w-full">
-                  <tbody>
-                    <tr>
-                      <td className="py-2 text-gray-600 w-2/5">Pay Load</td>
-                      <td className="py-2">{vehicle.pay_load ? `${vehicle.pay_load} kg` : 'N/A'}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 text-gray-600">Total Weight</td>
-                      <td className="py-2">{vehicle.total_weight ? `${vehicle.total_weight} kg` : 'N/A'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
               {/* Status & Dates */}
               <div>
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Status & Dates</h3>
@@ -182,10 +355,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
                     <tr>
                       <td className="py-2 text-gray-600">Next Service</td>
                       <td className="py-2 font-medium">{formatDate(vehicle.next_service_date)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 text-gray-600">BOLO Expiry</td>
-                      <td className="py-2 font-medium">{formatDate(vehicle.bolo_expired_date)}</td>
                     </tr>
                     <tr>
                       <td className="py-2 text-gray-600">Delivery Date</td>
@@ -273,6 +442,17 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, loading, 
           )}
         </div>
       </div>
+
+      {/* Full Edit Modal */}
+      {vehicle && (
+        <AddVehicleModal
+          isOpen={showFullEditModal}
+          onClose={() => setShowFullEditModal(false)}
+          onSuccess={handleFullUpdateSuccess}
+          editData={vehicle}
+          isEditMode={true}
+        />
+      )}
     </>
   );
 };

@@ -3,10 +3,13 @@ import { vehicleService } from '../services/vehicle.service';
 import { VehicleListItem, VehicleDetail as VehicleDetailType, VehicleFilters } from '../types/vehicle';
 import { VehicleDetail } from '../components/vehicle/VehicleDetail';
 import { toast } from 'sonner';
+import { AddVehicleModal } from '../components/vehicle/AddVehicleModal';
+
 
 export const Vehicles: React.FC = () => {
   const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleDetailType | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [pagination, setPagination] = useState({
@@ -60,6 +63,10 @@ export const Vehicles: React.FC = () => {
     }
   };
 
+    const handleAddSuccess = () => {
+    fetchVehicles();
+  };
+
   // Load vehicles on mount and when filters change
   useEffect(() => {
     fetchVehicles();
@@ -96,12 +103,21 @@ export const Vehicles: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
-        <p className="text-gray-600 mt-1">
-          {pagination.total} total vehicles
-        </p>
+        {/* Header with Add Button */}
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
+          <p className="text-gray-600 mt-1">
+            {pagination.total} total vehicles
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
+        >
+          <span className="text-lg">+</span>
+          Add Vehicle
+        </button>
       </div>
 
       {/* Filters */}
@@ -138,7 +154,6 @@ export const Vehicles: React.FC = () => {
           className="px-3 py-2 border border-gray-300 rounded-md min-w-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="">All Fuels</option>
-          <option value="Petrol">Petrol</option>
           <option value="Diesel">Diesel</option>
           <option value="Regular">Regular</option>
           <option value="Octane">Octane</option>
@@ -249,10 +264,23 @@ export const Vehicles: React.FC = () => {
       </div>
 
       {/* Vehicle Detail Modal - Slides from right */}
-      <VehicleDetail 
-        vehicle={selectedVehicle}
-        loading={loadingDetail}
-        onClose={closeDetails}
+<VehicleDetail 
+  vehicle={selectedVehicle}
+  loading={loadingDetail}
+  onClose={closeDetails}
+  onUpdate={() => {
+    // Refresh the vehicle details after update
+    if (selectedVehicle) {
+      fetchVehicleDetail(selectedVehicle.plate_no);
+    }
+    fetchVehicles();
+  }}
+/>
+
+       <AddVehicleModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleAddSuccess}
       />
     </div>
   );

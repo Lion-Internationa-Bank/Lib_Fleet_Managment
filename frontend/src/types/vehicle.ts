@@ -72,3 +72,34 @@ export interface PaginatedResponse<T> {
   };
   data: T[];
 }
+
+export interface CreateVehiclePayload {
+  plate_no: string;
+  location: string;
+  vehicle_allocation: string;
+  vehicle_type: string;
+  body_color: string;
+  manufacturing_year: number;
+  vehicle_origin: string;
+  title_certificate_no?: string;
+  vehicle_model: string;
+  chassis_no: string;
+  engine_no: string;
+  seating_capacity: number;
+  pay_load?: number;
+  total_weight?: number;
+  horse_power?: number;
+  no_of_cylinder?: number;
+  cc?: number;
+  drive_type?: string;
+  fuel_type: 'Diesel' | 'Regular' | 'Octane' | 'Petrol';
+  tyre_size: string;
+  original_price?: number;
+  total_price?: number;
+  delivery_date?: string;
+  bolo_expired_date: string;
+  supplier_company?: string;
+  current_km?: number;
+  last_service_date?: string;
+  next_service_date?: string;
+}

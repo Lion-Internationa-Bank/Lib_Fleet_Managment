@@ -75,6 +75,15 @@ export interface PaginatedResponse<T> {
   data: T[];
 }
 
+export interface UpdateLocationPayload {
+  location?: string;
+  vehicle_allocation?: string;
+}
+
+export interface UpdateCompliancePayload {
+  bolo_expired_date: string;
+}
+
 // Vehicle Service
 export const vehicleService = {
   // Get all vehicles with filters
@@ -87,15 +96,32 @@ export const vehicleService = {
 
   // Create new vehicle
   createVehicle: (data: Partial<VehicleDetail>) => 
-    api.post<{ success: boolean; data: VehicleDetail }>('/vehicles', data),
+    api.post<{ success: boolean; message:String, data: VehicleDetail }>('/vehicles', data),
+
+  // Update vehicle location and allocation
+  updateVehicleLocation: (plateNo: string, data: UpdateLocationPayload) => 
+    api.patch<{ success: boolean; message: string; data: VehicleDetail }>(
+      `/vehicles/${plateNo.toUpperCase()}/location`, 
+      data
+    ),
+  // Full update vehicle (PUT)
+  updateVehicleFull: (plateNo: string, data: Partial<VehicleDetail>) => 
+    api.put<{ success: boolean; message: string; data: VehicleDetail }>(
+      `/vehicles/${plateNo.toUpperCase()}`, 
+      data
+    ), 
+
+  // Update vehicle compliance (BOLO expiry date)
+  updateVehicleCompliance: (plateNo: string, data: UpdateCompliancePayload) => 
+    api.patch<{ success: boolean; message: string; data: VehicleDetail }>(
+      `/vehicles/${plateNo.toUpperCase()}/compliance`, 
+      data
+    ),
 
   // Update vehicle
   updateVehicle: (plateNo: string, data: Partial<VehicleDetail>) => 
     api.put<{ success: boolean; data: VehicleDetail }>(`/vehicles/${plateNo.toUpperCase()}`, data),
 
-  // Delete vehicle
-  deleteVehicle: (plateNo: string) => 
-    api.delete<{ success: boolean; message: string }>(`/vehicles/${plateNo.toUpperCase()}`),
 
   // Upload vehicle document
   uploadDocument: (plateNo: string, file: File, documentType?: string) => 
@@ -105,9 +131,7 @@ export const vehicleService = {
       { documentType }
     ),
 
-  // Export vehicles
-  exportVehicles: (format: 'csv' | 'pdf' = 'csv', filters?: VehicleFilters) => 
-    api.download('/vehicles/export', `vehicles.${format}`, { params: { ...filters, format } }),
+
 };
 
 // Convenience exports
@@ -116,7 +140,9 @@ export const {
   getVehicleByPlate,
   createVehicle,
   updateVehicle,
-  deleteVehicle,
+  updateVehicleFull,
+  updateVehicleCompliance,
+  updateVehicleLocation,
   uploadDocument,
-  exportVehicles,
+
 } = vehicleService;
