@@ -12,78 +12,78 @@ export const adminSidebar: AppRoute[] = [
     id: "vehicles",
     label: "Vehicles",
     icon: createIcon(Car),
-    path: "/vehicles",
+    path: "/dashboard/vehicles",
   },
   {
     id: "foreclosure",
     label: "Foreclosure Vehicles",
     icon: createIcon(XCircle),
-    path: "/foreclosure",
+    path: "/dashboard/foreclosure",
   },
   {
     id: "maintenance",
     label: "Maintenance",
     icon: createIcon(Wrench),
     children: [
-      { id: "maint-vehicle", label: "Vehicle Service Records", path: "/maintenance/vehicles" },
-      { id: "maint-generator", label: "Generator Service Records", path: "/maintenance/generators" },
-      { id: "maint-tire", label: "Tire Records", path: "/maintenance/tires" },
-      { id: "maint-agreements", label: "Maintenance Agreements", path: "/maintenance/agreements" },
+      { id: "maint-vehicle", label: "Vehicle Service Records", path: "/dashboard/maintenance/vehicles" },
+      { id: "maint-generator", label: "Generator Service Records", path: "/dashboard/maintenance/generators" },
+      { id: "maint-tire", label: "Tire Records", path: "/dashboard/maintenance/tires" },
+      { id: "maint-agreements", label: "Maintenance Agreements", path: "/dashboard/maintenance/agreements" },
     ],
   },
   {
     id: "compliance",
     label: "Active Reminders",
     icon: createIcon(AlertCircle),
-    path: "/compliance/reminders",
+    path: "/dashboard/compliance/reminders",
   },
-  { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/accidents" },
-  { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/fuel" },
+  { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/dashboard/accidents" },
+  { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/dashboard/fuel" },
   {
     id: "reports",
     label: "Reports",
     icon: createIcon(FileText),
-    path: "/reports",
+    path: "/dashboard/reports",
   },
 ];
 
 // COMPLETE PFO Sidebar
 export const pfoSidebar: AppRoute[] = [
-  { id: "dashboard", label: "Dashboard", icon: createIcon(LayoutDashboard), path: "/dashboard" },
+  { id: "dashboard", label: "Dashboard", icon: createIcon(LayoutDashboard), path: "/dashboard/dashboard" },
   {
     id: "vehicles",
     label: "Vehicles",
     icon: createIcon(Car),
-    path: "/vehicles",
+    path: "/dashboard/vehicles",
   },
   {
     id: "foreclosure",
     label: "Foreclosure Vehicles",
     icon: createIcon(XCircle),
-    path: "/foreclosure",
+    path: "/dashboard/foreclosure",
   },
   {
     id: "maintenance",
     label: "Maintenance",
     icon: createIcon(Wrench),
     children: [
-      { id: "maint-vehicle", label: "Vehicle Maintenance", path: "/maintenance/vehicles" },
-      { id: "maint-generator", label: "Generator Maintenance", path: "/maintenance/generators" },
-      { id: "maint-tire", label: "Tire Records", path: "/maintenance/tires" },
-      { id: "maint-agreements", label: "Maintenance Agreements", path: "/maintenance/agreements" },
+      { id: "maint-vehicle", label: "Vehicle Maintenance", path: "/dashboard/maintenance/vehicles" },
+      { id: "maint-generator", label: "Generator Maintenance", path: "/dashboard/maintenance/generators" },
+      { id: "maint-tire", label: "Tire Records", path: "/dashboard/maintenance/tires" },
+      { id: "maint-agreements", label: "Maintenance Agreements", path: "/dashboard/maintenance/agreements" },
     ],
   },
   {
     id: "compliance",
     label: "Active Reminders",
     icon: createIcon(AlertCircle),
-    path: "/compliance/reminders",
+    path: "/dashboard/compliance/reminders",
   },
   {
     id: "reports",
     label: "Reports",
     icon: createIcon(FileText),
-    path: "/reports",
+    path: "/dashboard/reports",
   },
 ];
 
@@ -94,16 +94,16 @@ export const csSidebar: AppRoute[] = [
     id: "vehicles",
     label: "Vehicles",
     icon: createIcon(Car),
-    path: "/vehicles",
+    path: "/dashboard/vehicles",
   },
   {
     id: "compliance",
     label: "Active Reminders",
     icon: createIcon(AlertCircle),
-    path: "/compliance/reminders",
+    path: "/dashboard/compliance/reminders",
   },
-  { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/accidents" },
-  { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/fuel" },
+  { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/dashboard/accidents" },
+  { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/dashboard/fuel" },
 ];
 
 export const getSidebarByRole = (role: UserRole): AppRoute[] => {

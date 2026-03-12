@@ -62,7 +62,12 @@ export const getAllVehicles = catchAsync(async (req, res) => {
   }
 
   const total = await Vehicle.countDocuments(filter);
+  
+  // Select specific fields to return
   const vehicles = await Vehicle.find(filter)
+    .select(
+      'plate_no location vehicle_allocation vehicle_type vehicle_model fuel_type current_km next_service_date bolo_expired_date'
+    )
     .sort(sortObj)
     .skip(skip)
     .limit(limitNum)
@@ -81,7 +86,17 @@ export const getAllVehicles = catchAsync(async (req, res) => {
       hasNext: pageNum < totalPages,
       hasPrev: pageNum > 1,
     },
-    data: vehicles,
+    data: vehicles.map(vehicle => ({
+      plate_no: vehicle.plate_no,
+      location: vehicle.location,
+      vehicle_allocation: vehicle.vehicle_allocation,
+      vehicle_type: vehicle.vehicle_type,
+      vehicle_model: vehicle.vehicle_model,
+      fuel_type: vehicle.fuel_type,
+      current_km: vehicle.current_km,
+      next_service_date: vehicle.next_service_date,
+      bolo_expired_date: vehicle.bolo_expired_date
+    })),
   });
 });
 

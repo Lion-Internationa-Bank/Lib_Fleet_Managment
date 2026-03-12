@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../../contex/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { UserRole } from "../../types/auth";
 import { useNavigate } from "react-router-dom";
 

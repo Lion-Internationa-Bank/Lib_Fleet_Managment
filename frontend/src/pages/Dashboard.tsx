@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../contex/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { TrendingUp, Clock, AlertTriangle, Plus, ChevronRight, MapPin } from "lucide-react";
 
 export const Dashboard: React.FC = () => {

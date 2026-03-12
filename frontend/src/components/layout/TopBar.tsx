@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../../contex/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, Bell, Search } from "lucide-react";
 

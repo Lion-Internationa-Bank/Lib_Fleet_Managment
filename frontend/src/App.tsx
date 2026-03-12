@@ -1,10 +1,21 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contex/AuthContext";
-import {Login}  from "./pages/auth/Login"
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Login } from "./pages/auth/Login";
 import { AppLayout } from "./components/layout/AppLayout";
-import { Vehicles } from "./pages/Vehicles";
 import { Dashboard } from "./pages/Dashboard";
+import { Vehicles } from "./pages/Vehicles";
+
+import  VehicleServiceRecords  from "./pages/maintenance/VehicleServiceRecords";
+import ForeclosureVehicles  from "./pages/ForeclosureVehicles";
+import GeneratorServiceRecords  from "./pages/maintenance/GeneratorServiceRecords";
+
+import  TireRecords  from "./pages/maintenance/TireRecords";
+import  MaintenanceAgreements  from "./pages/maintenance/MaintenanceAgreements";
+import  ActiveReminders  from "./pages/compliance/ActiveReminders";
+import  Accidents  from "./pages/Accidents";
+import  FuelRecords from "./pages/FuelRecords";
+import  Reports from "./pages/Reports";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -26,7 +37,26 @@ const AppContent: React.FC = () => {
         >
           <Route path="" element={<Dashboard />} />
           <Route path="vehicles" element={<Vehicles />} />
-          {/* Add more routes */}
+          <Route path="foreclosure" element={<ForeclosureVehicles />} />
+          
+          {/* Maintenance Routes */}
+          <Route path="maintenance/vehicles" element={<VehicleServiceRecords />} />
+          <Route path="maintenance/generators" element={<GeneratorServiceRecords />} />
+          <Route path="maintenance/tires" element={<TireRecords />} />
+          <Route path="maintenance/agreements" element={<MaintenanceAgreements />} />
+          
+          {/* Compliance Routes */}
+          <Route path="compliance/reminders" element={<ActiveReminders />} />
+          
+          {/* Accidents and Fuel Routes */}
+          <Route path="accidents" element={<Accidents />} />
+          <Route path="fuel" element={<FuelRecords />} />
+          
+          {/* Reports Route */}
+          <Route path="reports" element={<Reports />} />
+          
+          {/* Catch all for unknown routes under dashboard */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>
