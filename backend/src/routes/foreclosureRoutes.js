@@ -10,14 +10,9 @@ import {
 
 const router = express.Router();
 
-router
-  .route('/')
-  //   .get(restrictTo('Admin', 'PFO'), getAllForeclosures);
-  .get(getForeclosuresVehilces)
-//   .post(restrictTo('PFO'), createForeclosure)
-   .post(createForeclosure);
 
-
+router.get('/',getForeclosuresVehilces)
+router.post('/',createForeclosure)
 // router.patch('/:id', restrictTo('Admin'), updateForeclosure);
 router.put('/:plateNo', updateForeclosure);
 

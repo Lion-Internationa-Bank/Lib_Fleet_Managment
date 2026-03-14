@@ -38,7 +38,7 @@ app.use(helmet());
 app.use(compression());
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:8082',
   credentials: true
 }));
 

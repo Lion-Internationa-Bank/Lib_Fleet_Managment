@@ -4,7 +4,7 @@ import { UserRole } from "../../types/auth";
 import { useNavigate } from "react-router-dom";
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("zedoyetefe@gmail.com");
   const [role, setRole] = useState<UserRole>("ADMIN");
   const { login } = useAuth();
   const navigate = useNavigate();

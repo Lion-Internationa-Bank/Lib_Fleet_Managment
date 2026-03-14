@@ -12,7 +12,7 @@ class ApiService {
 
   private constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1',
+      baseURL: import.meta.env.VITE_API_URL,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -114,32 +114,33 @@ class ApiService {
 //   }
 
   // Generic GET method
-  public get<T = any>(url: string, params?: any, config?: AxiosRequestConfig): Promise<T> {
+  
+  public async get<T = any>(url: string, params?: any, config?: AxiosRequestConfig): Promise<T> {
     return this.api.get(url, { ...config, params }).then(response => response.data);
   }
 
   // Generic POST method
-  public post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     return this.api.post(url, data, config).then(response => response.data);
   }
 
   // Generic PUT method
-  public put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     return this.api.put(url, data, config).then(response => response.data);
   }
 
   // Generic PATCH method
-  public patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     return this.api.patch(url, data, config).then(response => response.data);
   }
 
   // Generic DELETE method
-  public delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  public async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.api.delete(url, config).then(response => response.data);
   }
 
   // Upload file method
-  public upload<T = any>(url: string, file: File, additionalData?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
+  public async upload<T = any>(url: string, file: File, additionalData?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
     const formData = new FormData();
     formData.append('file', file);
     
