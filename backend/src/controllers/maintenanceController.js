@@ -190,18 +190,24 @@ export const updateVehicleMaintenance = catchAsync(async (req, res, next) => {
 // ==================== GENERATOR MAINTENANCE ====================
 
 export const createGeneratorService = catchAsync(async (req, res, next) => {
-  // Check if generator exists
-  const generator = await Generator.findById(req.body.generatorId);
+  const { generatorSerialNo } = req.body;
+  
+  // Check if generator exists by serial number
+  const generator = await Generator.findOne({ serial_no: generatorSerialNo.toUpperCase() });
 
   if (!generator) {
     return res.status(404).json({
       success: false,
-      message: 'Generator record not found',
+      message: 'Generator with this serial number not found',
     });
   }
 
-  // Fill allocation from generator
+  // Fill allocation from generator and set generatorId
   req.body.allocation = generator.allocation;
+  req.body.generatorId = generator._id;
+  
+  // Remove serialNo from body as we use generatorId
+  delete req.body.generatorSerialNo;
 
   // Create service record
   const service = await GeneratorService.create(req.body);
@@ -211,12 +217,15 @@ export const createGeneratorService = catchAsync(async (req, res, next) => {
 
   if (req.body.service_date) {
     const serviceDate = new Date(req.body.service_date);
-
     const nextServiceDate = new Date(serviceDate);
     nextServiceDate.setFullYear(nextServiceDate.getFullYear() + 1);
 
     generatorUpdate.last_service_date = serviceDate;
     generatorUpdate.next_service_date = nextServiceDate;
+  }
+
+  if (req.body.hour_meter_reading) {
+    generatorUpdate.current_hour_meter = req.body.hour_meter_reading;
   }
 
   if (req.body.status) {
@@ -226,15 +235,19 @@ export const createGeneratorService = catchAsync(async (req, res, next) => {
   // Update generator only if needed
   if (Object.keys(generatorUpdate).length > 0) {
     await Generator.updateOne(
-      { _id: req.body.generatorId },
+      { _id: generator._id },
       generatorUpdate
     );
   }
 
+  // Populate generator details for response
+  const populatedService = await GeneratorService.findById(service._id)
+    .populate('generatorId', 'serial_no capacity allocation');
+
   res.status(201).json({
     success: true,
     message: 'Generator service record registered successfully',
-    data: service,
+    data: populatedService,
   });
 });
 
@@ -242,12 +255,39 @@ export const getAllGeneratorServices = catchAsync(async (req, res, next) => {
   const {
     page = 1,
     limit = 20,
-    generatorId,
+    generatorSerialNo,
+    maintenance_type,
     sort = '-service_date',
   } = req.query;
 
   const filter = {};
-  if (generatorId) filter.generatorId = generatorId;
+  
+  // If searching by serial number, first find the generator
+  if (generatorSerialNo) {
+    const generator = await Generator.findOne({ 
+      serial_no: { $regex: generatorSerialNo, $options: 'i' } 
+    });
+    if (generator) {
+      filter.generatorId = generator._id;
+    } else {
+      // Return empty result if generator not found
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        total: 0,
+        pagination: {
+          page: 1,
+          limit: Number(limit),
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+        data: [],
+      });
+    }
+  }
+  
+  if (maintenance_type) filter.maintenance_type = maintenance_type;
 
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
@@ -257,7 +297,6 @@ export const getAllGeneratorServices = catchAsync(async (req, res, next) => {
   const totalPages = Math.ceil(total / limitNum);
 
   const services = await GeneratorService.find(filter)
-    .populate('generatorId', 'serial_no capacity_kva')
     .sort(sort)
     .skip(skip)
     .limit(limitNum);
@@ -285,6 +324,15 @@ export const getGeneratorServiceHistory = catchAsync(async (req, res, next) => {
     sort = '-service_date' 
   } = req.query;
 
+  // Verify generator exists
+  const generator = await Generator.findById(generatorId);
+  if (!generator) {
+    return res.status(404).json({
+      success: false,
+      message: 'Generator not found',
+    });
+  }
+
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
   const skip = (pageNum - 1) * limitNum;
@@ -293,14 +341,19 @@ export const getGeneratorServiceHistory = catchAsync(async (req, res, next) => {
   const totalPages = Math.ceil(total / limitNum);
 
   const history = await GeneratorService.find({ generatorId })
-    .populate('generatorId', 'serial_no capacity_kva') // consistent fields
+    .populate('generatorId', 'serial_no capacity allocation')
     .sort(sort)
     .skip(skip)
     .limit(limitNum);
 
   res.status(200).json({
     success: true,
-    generatorId,
+    generator: {
+      id: generator._id,
+      serial_no: generator.serial_no,
+      capacity: generator.capacity,
+      allocation: generator.allocation
+    },
     count: history.length,
     total,
     pagination: {
@@ -325,6 +378,14 @@ export const updateGeneratorService = catchAsync(async (req, res, next) => {
     });
   }
 
+  // Prevent changing generator
+  if (req.body.generatorId && req.body.generatorId.toString() !== service.generatorId.toString()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot change generator for existing service record'
+    });
+  }
+
   // 2. Update service fields
   Object.assign(service, req.body);
   await service.save();
@@ -342,12 +403,15 @@ export const updateGeneratorService = catchAsync(async (req, res, next) => {
 
     if (req.body.service_date) {
       const serviceDate = new Date(req.body.service_date);
-
       const nextServiceDate = new Date(serviceDate);
       nextServiceDate.setFullYear(nextServiceDate.getFullYear() + 1);
 
       generatorUpdate.last_service_date = serviceDate;
       generatorUpdate.next_service_date = nextServiceDate;
+    }
+
+    if (req.body.hour_meter_reading) {
+      generatorUpdate.current_hour_meter = req.body.hour_meter_reading;
     }
 
     if (req.body.status) {
@@ -363,14 +427,13 @@ export const updateGeneratorService = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Return populated service
+  const updatedService = await GeneratorService.findById(service._id)
+    .populate('generatorId', 'serial_no capacity allocation');
+
   res.status(200).json({
     success: true,
     message: 'Generator service record updated successfully',
-    data: service,
+    data: updatedService,
   });
 });
-
-
-
-
-

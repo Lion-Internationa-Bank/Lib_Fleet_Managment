@@ -12,7 +12,6 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
 
     vehicle_type: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -25,7 +24,6 @@ const VehicleMaintenanceSchema = new mongoose.Schema(
 
     location: {
       type: String,
-      required: true,
       trim: true,
     },
 

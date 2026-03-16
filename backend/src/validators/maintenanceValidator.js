@@ -32,7 +32,7 @@ export const createVehicleMaintenanceSchema = z.object({
 
     invoice_no: z.string().min(1).trim().toUpperCase(),
 
-    location: z.string().min(1).trim(),
+    location: z.string().min(1).trim().optional(),
 
     maintenance_type: z.enum([
       'Preventive',
@@ -91,29 +91,31 @@ export const updateVehicleMaintenanceSchema = z.object({
 
 export const createGeneratorServiceSchema = z.object({
   body: z.object({
-    generatorId: z.string().length(24), // ObjectId
-    hour_meter_reading: z.number().min(0),
-    maintenance_type: z.string().optional(),
+    generatorSerialNo: z.string().min(1, 'Generator serial number is required'),
+    hour_meter_reading: z.number().min(0, 'Hour meter reading must be positive'),
+    next_service_hour: z.number().min(0, 'Next service hour must be positive'),
+    maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']),
     description: z.string().optional(),
-    service_provider: z.string().optional(),
-    service_date: z.coerce.date(),
-    cost: z.number().min(0),
-    status: z.string(),
+    service_provider: z.string().min(1, 'Service provider is required'),
+    service_date: z.string().datetime(),
+    cost: z.number().min(0, 'Cost must be positive'),
+    status: z.string().min(1, 'Status is required'),
   }),
 });
 
-
 export const updateGeneratorServiceSchema = z.object({
+  params: z.object({
+    id: z.string().length(24, 'Invalid service ID'),
+  }),
   body: z.object({
     hour_meter_reading: z.number().min(0).optional(),
-    maintenance_type: z.string().optional(),
+    next_service_hour: z.number().min(0).optional(),
+    maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']).optional(),
     description: z.string().optional(),
     service_provider: z.string().optional(),
-    service_date: z.coerce.date().optional(),
+    service_date: z.string().datetime().optional(),
     cost: z.number().min(0).optional(),
     status: z.string().optional(),
-  }) .refine((data) => Object.keys(data).length > 0, {
-    message: "Request body cannot be empty for update",
-    path: [], // This shows error at root level
+    // generatorId cannot be updated
   }),
 });
