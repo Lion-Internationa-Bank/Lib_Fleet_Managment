@@ -11,7 +11,6 @@ interface Props {
 const FilterComponent: React.FC<Props> = ({ 
   onFilter, 
   initialFilters = {},
-  initialExpanded = true 
 }) => {
   // Initialize with empty values, properly typed
   const [filters, setFilters] = useState<ForeclosureVehicleFilters>({
@@ -94,7 +93,7 @@ const FilterComponent: React.FC<Props> = ({
   };
 
   // Check if any filter has a value (for showing clear button)
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+  const hasActiveFilters = Object.entries(filters).some(([ value]) => {
     return value !== '' && value !== undefined && value !== null;
   });
 

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 // import { toast } from 'sonner';
 
 // Extend AxiosRequestConfig to include our custom properties
