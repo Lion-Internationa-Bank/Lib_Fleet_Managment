@@ -62,7 +62,7 @@ const FuelExpenseSchema = new mongoose.Schema(
 FuelExpenseSchema.index({ plate_no: 1, starting_date: -1 });
 
 
-FuelExpenseSchema.pre('save', async function (next) {
+FuelExpenseSchema.pre('save', async function () {
 
     // 1. Calculate liter_used immediately
     this.liter_used = Number((this.fuel_in_birr / this.birr_per_liter).toFixed(3));

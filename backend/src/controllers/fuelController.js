@@ -11,6 +11,12 @@ const buildFuelQuery = (query) => {
   if (query.start_date) filters.starting_date = { ...filters.starting_date, $gte: new Date(query.start_date) };
   if (query.end_date) filters.starting_date = { ...filters.starting_date, $lte: new Date(query.end_date) };
   if (query.fuel_usage_type) filters.fuel_usage_type = new RegExp(query.fuel_usage_type, 'i');
+    // Filter by completion status
+  if (query.is_completed === 'true') {
+    filters.ending_km = { $ne: null };
+  } else if (query.is_completed === 'false') {
+    filters.ending_km = null;
+  }
 
   return filters;
 };
@@ -43,7 +49,7 @@ export const getFuelExpenses = catchAsync(async (req, res, next) => {
   } = req.query;
 
   const pageNum = Number(page);
-  const limitNum = Number(limit);
+  const limitNum =  Number(limit);
   const skip = (pageNum - 1) * limitNum;
 
   const filters = buildFuelQuery(req.query);
