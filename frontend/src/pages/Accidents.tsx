@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { 
   Plus, MoreVertical, Edit, RefreshCw, AlertTriangle, Eye,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  Calendar, User, MapPin, Car, DollarSign
+  Calendar, User, MapPin, DollarSign
 } from 'lucide-react';
 import accidentService from '../services/accident.service';
 import { 
