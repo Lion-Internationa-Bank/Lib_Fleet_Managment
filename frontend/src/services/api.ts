@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig} from 'axios';
 // import { toast } from 'sonner';
 
 // Extend AxiosRequestConfig to include our custom properties
@@ -18,8 +18,6 @@ class ApiService {
         'Content-Type': 'application/json',
       },
     });
-
-    // this.setupInterceptors();
   }
 
   // Singleton pattern
@@ -30,113 +28,44 @@ class ApiService {
     return ApiService.instance;
   }
 
-//   private setupInterceptors() {
-//     // Request interceptor - adds token to every request
-//     this.api.interceptors.request.use(
-//       (config: InternalAxiosRequestConfig) => {
-//         // Get token from localStorage (or your preferred storage)
-//         const token = localStorage.getItem('accessToken');
-        
-//         if (token) {
-//           config.headers.Authorization = `Bearer ${token}`;
-//         }
-
-//         // Log requests in development
-//         if (import.meta.env.DEV) {
-//           console.log(`🚀 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
-//             params: config.params,
-//             data: config.data,
-//           });
-//         }
-
-//         return config;
-//       },
-//       (error) => {
-//         return Promise.reject(error);
-//       }
-//     );
-
-//     // Response interceptor - handles errors and token refresh
-//     this.api.interceptors.response.use(
-//       (response) => {
-//         // Log responses in development
-//         if (import.meta.env.DEV) {
-//           console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
-//         }
-//         return response;
-//       },
-//       async (error) => {
-//         const originalRequest = error.config as CustomAxiosRequestConfig;
-
-//         // Handle 401 Unauthorized - token expired
-//         if (error.response?.status === 401 && !originalRequest._retry) {
-//           originalRequest._retry = true;
-
-//           try {
-//             // Attempt to refresh token
-//             const refreshToken = localStorage.getItem('refreshToken');
-//             if (refreshToken) {
-//               const response = await this.api.post('/auth/refresh', {
-//                 refreshToken,
-//               });
-
-//               const { accessToken } = response.data;
-//               localStorage.setItem('accessToken', accessToken);
-
-//               // Retry original request with new token
-//               originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-//               return this.api(originalRequest);
-//             }
-//           } catch (refreshError) {
-//             // Refresh failed - redirect to login
-//             localStorage.removeItem('accessToken');
-//             localStorage.removeItem('refreshToken');
-//             window.location.href = '/login';
-//           }
-//         }
-
-//         // Handle other errors
-//         const message = error.response?.data?.message || error.message || 'An error occurred';
-//         toast.error(message);
-
-//         // Log errors in development
-//         if (import.meta.env.DEV) {
-//           console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-//             status: error.response?.status,
-//             data: error.response?.data,
-//             message: error.message,
-//           });
-//         }
-
-//         return Promise.reject(error);
-//       }
-//     );
-//   }
-
-  // Generic GET method
-  
+  // Generic GET method for JSON responses
   public async get<T = any>(url: string, params?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.api.get(url, { ...config, params }).then(response => response.data);
+    const response = await this.api.get(url, { ...config, params });
+    return response.data;
+  }
+
+  // Special method for file downloads - returns the full response
+  public async getForDownload(url: string, params?: any, config?: AxiosRequestConfig): Promise<Blob> {
+    const response = await this.api.get(url, {
+      ...config,
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
   }
 
   // Generic POST method
   public async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.api.post(url, data, config).then(response => response.data);
+    const response = await this.api.post(url, data, config);
+    return response.data;
   }
 
   // Generic PUT method
   public async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.api.put(url, data, config).then(response => response.data);
+    const response = await this.api.put(url, data, config);
+    return response.data;
   }
 
   // Generic PATCH method
   public async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.api.patch(url, data, config).then(response => response.data);
+    const response = await this.api.patch(url, data, config);
+    return response.data;
   }
 
   // Generic DELETE method
   public async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.api.delete(url, config).then(response => response.data);
+    const response = await this.api.delete(url, config);
+    return response.data;
   }
 
   // Upload file method
@@ -150,31 +79,69 @@ class ApiService {
       });
     }
 
-    return this.api.post(url, formData, {
+    const response = await this.api.post(url, formData, {
       ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
         ...config?.headers,
       },
-    }).then(response => response.data);
+    });
+    return response.data;
   }
 
-  // Download file method
-  public async download(url: string, filename?: string, config?: AxiosRequestConfig): Promise<void> {
-    const response = await this.api.get(url, {
-      ...config,
-      responseType: 'blob',
-    });
+  // Download file method - FIXED VERSION
+  public async download(url: string, filename?: string, params?: any): Promise<void> {
+    try {
+      // Build the full URL with query parameters
+      const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+      const fullUrl = `${import.meta.env.VITE_API_URL}${url}${queryString}`;
+      
+      console.log('Downloading from:', fullUrl); // For debugging
+      
+      // Create an anchor element and trigger download
+      const link = document.createElement('a');
+      link.href = fullUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      throw new Error('Failed to download file');
+    }
+  }
 
-    const blob = new Blob([response.data]);
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename || 'download';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(downloadUrl);
+  // Alternative method using fetch for more control
+  public async downloadWithFetch(url: string, filename?: string, params?: any): Promise<void> {
+    try {
+      const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+      const fullUrl = `${import.meta.env.VITE_API_URL}${url}${queryString}`;
+      
+      const response = await fetch(fullUrl);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Download failed');
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
+    } catch (error: any) {
+      console.error('Download error:', error);
+      throw error;
+    }
   }
 
   // Set auth token manually

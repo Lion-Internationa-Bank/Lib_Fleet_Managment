@@ -1,7 +1,7 @@
 // src/config/sidebar.ts
 import React from 'react';
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Car, Wrench, AlertCircle, FileText, Fuel, XCircle,UserCircleIcon} from "lucide-react";
+import { LayoutDashboard, Car, Wrench, AlertCircle, FileText, Fuel, XCircle,UserCircleIcon, Gauge} from "lucide-react";
 import { AppRoute, UserRole } from "../types/auth";
 
 const createIcon = (icon: LucideIcon): React.ReactNode => React.createElement(icon, { size: 18 });
@@ -46,6 +46,12 @@ export const adminSidebar: AppRoute[] = [
   },
   { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/dashboard/accidents" },
   { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/dashboard/fuel" },
+   {
+    id: "insurances",
+    label: "Insurances",
+    icon: createIcon(Gauge),
+    path: "/dashboard/insurances",
+  },
   {
     id: "reports",
     label: "Reports",

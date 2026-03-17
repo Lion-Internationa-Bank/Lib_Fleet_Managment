@@ -17,6 +17,7 @@ import Accidents from "./pages/Accidents";
 import FuelRecords from "./pages/FuelRecords";
 import Reports from "./pages/Reports";
 import Generators from "./pages/Generators";
+import Insurances from "./pages/Insurances";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -56,7 +57,8 @@ const AppContent: React.FC = () => {
           {/* Reports Route */}
           <Route path="reports" element={<Reports />} />
           <Route path="generators" element={<Generators/>} />
-          
+          <Route path="insurances" element={<Insurances />} />
+
           {/* Catch all for unknown routes under dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>

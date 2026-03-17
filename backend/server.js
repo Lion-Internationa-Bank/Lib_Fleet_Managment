@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 // setupWebSocket?.(server);
 
 // server.listen(PORT, () => {
-    app.listen(PORT, () => {
+    app.listen(PORT,'0.0.0.0', () => {
   console.log(`LIB FMS Backend running on PORT ${PORT}`);
   console.log(`http://localhost:${PORT}`);
 

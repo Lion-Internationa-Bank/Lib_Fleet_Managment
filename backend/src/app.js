@@ -37,8 +37,24 @@ const __dirname = path.dirname(__filename);
 app.use(helmet());
 app.use(compression());
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,      // Your main production/dev URL
+  'http://localhost:8082',       // Local access
+  'http://10.1.22.25:8082',    // Replace with your actual local IP
+
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8082',
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
@@ -78,7 +94,7 @@ app.use('/api/v1/maintenance', maintenanceRoutes);
 app.use('/api/v1/generators', generatorRoutes);
 app.use('/api/v1/tracking',trakingRoutes)
 app.use('/api/v1/agreements',agreementRoutes)
-app.use("/api/v1/insurance", insuranceRoutes);
+app.use("/api/v1/insurances", insuranceRoutes);
 app.use('/api/v1/tires', tireRoutes);
 app.use("/api/v1/reports",  reportRoutes)
 app.use('/api/v1/reminders', reminderRoutes);

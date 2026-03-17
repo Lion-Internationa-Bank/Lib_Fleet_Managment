@@ -4,6 +4,7 @@ import { VehicleListItem, VehicleDetail as VehicleDetailType, VehicleFilters } f
 import { VehicleDetail } from '../components/vehicle/VehicleDetail';
 import { toast } from 'sonner';
 import { AddVehicleModal } from '../components/vehicle/AddVehicleModal';
+import { Eye } from 'lucide-react';
 
 
 export const Vehicles: React.FC = () => {
@@ -216,10 +217,11 @@ export const Vehicles: React.FC = () => {
                         <td className="py-3 px-4">{formatDate(vehicle.next_service_date)}</td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleViewDetails(vehicle.plate_no)}
-                            className="px-3 py-1 text-sm bg-transparent text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+                            onClick={() =>  handleViewDetails(vehicle.plate_no)}
+                            className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                            title="View Details"
                           >
-                            View
+                            <Eye size={18} />
                           </button>
                         </td>
                       </tr>
