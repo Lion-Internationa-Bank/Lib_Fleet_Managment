@@ -16,6 +16,7 @@ import ActiveReminders from "./pages/compliance/ActiveReminders";
 import Accidents from "./pages/Accidents";
 import FuelRecords from "./pages/FuelRecords";
 import Reports from "./pages/Reports";
+import Generators from "./pages/Generators";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -54,6 +55,7 @@ const AppContent: React.FC = () => {
           
           {/* Reports Route */}
           <Route path="reports" element={<Reports />} />
+          <Route path="generators" element={<Generators/>} />
           
           {/* Catch all for unknown routes under dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -1,10 +1,10 @@
 export interface Generator {
   _id: string;
-  serial_no: string;
-  capacity: number;
-  allocation: string;
   location?: string;
+  allocation: string;
+  capacity: number;
   engine_brand?: string;
+  serial_no: string;
   acquisition_cost?: number;
   acquisition_date?: string;
   current_hour_meter: number;
@@ -15,32 +15,31 @@ export interface Generator {
   updatedAt: string;
 }
 
-export interface GeneratorService {
-  _id: string;
-  generatorId: Generator | string;
+export interface GeneratorFormData {
+  location?: string;
   allocation: string;
-  hour_meter_reading: number;
-  next_service_hour: number;
-  maintenance_type: 'Preventive' | 'Corrective' | 'Breakdown' | 'Body & Paint';
-  description?: string;
-  service_provider: string;
-  service_date: string;
-  cost: number;
+  capacity: number;
+  engine_brand?: string;
+  serial_no: string;
+  acquisition_cost?: number;
+  acquisition_date?: string;
+  current_hour_meter: number;
+  last_service_date?: string;
+  next_service_date?: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface GeneratorServiceFormData {
-  generatorSerialNo: string;  // Used only for creation
-  hour_meter_reading: number;
-  next_service_hour: number;
-  maintenance_type: 'Preventive' | 'Corrective' | 'Breakdown' | 'Body & Paint';
-  description?: string;
-  service_provider: string;
-  service_date: string;
-  cost: number;
-  status: string;
+export interface GeneratorFilterParams {
+  location?: string;
+  allocation?: string;
+  engine_brand?: string;
+  serial_no?: string;
+  capacity_min?: number;
+  capacity_max?: number;
+  status?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
 }
 
 export interface PaginationInfo {
@@ -51,23 +50,13 @@ export interface PaginationInfo {
   hasPrev: boolean;
 }
 
-
-export interface GeneratorServiceFilterParams {
-  generatorSerialNo?: string;  // Search by serial number
-  maintenance_type?: string;
-  date_from?: string;
-  date_to?: string;
-  page?: number;
-  limit?: number;
-  sort?: string;
+export interface ApiResponse {
+  success: boolean;
+  count: number;
+  total: number;
+  pagination: PaginationInfo;
+  data: Generator[];
 }
-
-export const GENERATOR_MAINTENANCE_TYPES = [
-  'Preventive',
-  'Corrective',
-  'Breakdown',
-  'Body & Paint'
-] as const;
 
 export const GENERATOR_STATUS_OPTIONS = [
   'Operational',
@@ -76,12 +65,47 @@ export const GENERATOR_STATUS_OPTIONS = [
   'Decommissioned'
 ] as const;
 
-// Helper to get generator info from service
-export const getGeneratorFromService = (service: GeneratorService): { id: string; serial_no: string; capacity: number } | null => {
-  if (typeof service.generatorId === 'string') return null;
-  return {
-    id: service.generatorId._id,
-    serial_no: service.generatorId.serial_no,
-    capacity: service.generatorId.capacity
-  };
+export const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'Operational':
+      return 'bg-green-100 text-green-800';
+    case 'Under Maintenance':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'Faulty':
+      return 'bg-red-100 text-red-800';
+    case 'Decommissioned':
+      return 'bg-gray-100 text-gray-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+export const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return 'N/A';
+  return `ETB ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+export const formatDateTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+export const formatNumber = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return 'N/A';
+  return value.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 };

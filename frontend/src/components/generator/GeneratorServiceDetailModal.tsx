@@ -3,7 +3,7 @@ import {
   X, Calendar, Zap, FileText, Wrench, DollarSign, 
   User, Clock, Gauge, Activity, MapPin, Hash
 } from 'lucide-react';
-import { GeneratorService } from '../../types/Generator';
+import { GeneratorService } from '../../types/GeneratorMentenance';
 
 interface Props {
   isOpen: boolean;

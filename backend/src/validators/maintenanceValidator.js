@@ -97,7 +97,7 @@ export const createGeneratorServiceSchema = z.object({
     maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']),
     description: z.string().optional(),
     service_provider: z.string().min(1, 'Service provider is required'),
-    service_date: z.string().datetime(),
+    service_date: z.coerce.date().optional(),
     cost: z.number().min(0, 'Cost must be positive'),
     status: z.string().min(1, 'Status is required'),
   }),
@@ -113,7 +113,7 @@ export const updateGeneratorServiceSchema = z.object({
     maintenance_type: z.enum(['Preventive', 'Corrective', 'Breakdown', 'Body & Paint']).optional(),
     description: z.string().optional(),
     service_provider: z.string().optional(),
-    service_date: z.string().datetime().optional(),
+    service_date: z.coerce.date().optional(),
     cost: z.number().min(0).optional(),
     status: z.string().optional(),
     // generatorId cannot be updated

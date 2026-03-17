@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { X, Info } from 'lucide-react';
-import { GeneratorService, GeneratorServiceFormData, GENERATOR_MAINTENANCE_TYPES, GENERATOR_STATUS_OPTIONS } from '../../types/Generator';
+import { GeneratorService, GeneratorServiceFormData, GENERATOR_MAINTENANCE_TYPES, GENERATOR_STATUS_OPTIONS } from '../../types/GeneratorMentenance';
 
 interface Props {
   isOpen: boolean;

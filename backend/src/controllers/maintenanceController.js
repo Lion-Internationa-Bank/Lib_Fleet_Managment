@@ -297,6 +297,7 @@ export const getAllGeneratorServices = catchAsync(async (req, res, next) => {
   const totalPages = Math.ceil(total / limitNum);
 
   const services = await GeneratorService.find(filter)
+    .populate('generatorId', 'serial_no capacity allocation location')
     .sort(sort)
     .skip(skip)
     .limit(limitNum);

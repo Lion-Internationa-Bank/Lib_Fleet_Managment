@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { GeneratorServiceFilterParams, GENERATOR_MAINTENANCE_TYPES } from '../../types/Generator';
+import { GeneratorServiceFilterParams, GENERATOR_MAINTENANCE_TYPES } from '../../types/GeneratorMentenance';
 
 interface Props {
   onFilter: (filters: GeneratorServiceFilterParams) => void;

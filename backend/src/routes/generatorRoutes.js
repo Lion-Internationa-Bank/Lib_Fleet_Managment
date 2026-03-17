@@ -7,7 +7,7 @@ import {
   getGeneratorById,
   updateGenerator,
 } from '../controllers/generatorController.js';
-import { validate } from '../middleware/validate.js'; // we'll create this
+import { validate } from '../middleware/validate.js'; 
 import {
   createGeneratorSchema,
   updateGeneratorSchema,
