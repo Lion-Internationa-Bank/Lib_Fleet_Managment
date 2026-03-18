@@ -13,7 +13,7 @@ import { validate } from '../middleware/validate.js';
 import {
   createTireSchema,
   updateTireSchema,
-  tireIdParamSchema,
+  tireIdParamSchema,  
   plateNoParamSchema,
   tireRotationSchema,
 } from '../validators/tireValidator.js';

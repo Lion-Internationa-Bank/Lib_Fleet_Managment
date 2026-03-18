@@ -9,8 +9,6 @@ import { Vehicles } from "./pages/Vehicles";
 import VehicleServiceRecords from "./pages/maintenance/VehicleServiceRecords";
 import ForeclosureVehicles from "./pages/ForeclosureVehicles";
 import GeneratorServiceRecords from "./pages/maintenance/GeneratorServiceRecords";
-
-import TireRecords from "./pages/maintenance/TireRecords";
 import MaintenanceAgreements from "./pages/maintenance/MaintenanceAgreements";
 import ActiveReminders from "./pages/compliance/ActiveReminders";
 import Accidents from "./pages/Accidents";
@@ -44,7 +42,6 @@ const AppContent: React.FC = () => {
           {/* Maintenance Routes */}
           <Route path="maintenance/vehicles" element={<VehicleServiceRecords />} />
           <Route path="maintenance/generators" element={<GeneratorServiceRecords />} />
-          <Route path="maintenance/tires" element={<TireRecords />} />
           <Route path="maintenance/agreements" element={<MaintenanceAgreements />} />
           
           {/* Compliance Routes */}

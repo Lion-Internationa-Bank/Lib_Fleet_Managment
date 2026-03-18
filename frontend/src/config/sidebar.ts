@@ -1,7 +1,7 @@
 // src/config/sidebar.ts
 import React from 'react';
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Car, Wrench, AlertCircle, FileText, Fuel, XCircle,UserCircleIcon, Gauge} from "lucide-react";
+import { LayoutDashboard, Car, Wrench, AlertCircle, FileText, Fuel, XCircle,AlertTriangle, Zap,  Shield, CarTaxiFrontIcon} from "lucide-react";
 import { AppRoute, UserRole } from "../types/auth";
 
 const createIcon = (icon: LucideIcon): React.ReactNode => React.createElement(icon, { size: 18 });
@@ -17,13 +17,13 @@ export const adminSidebar: AppRoute[] = [
   {
     id: "foreclosure",
     label: "Foreclosure Vehicles",
-    icon: createIcon(XCircle),
+    icon: createIcon(CarTaxiFrontIcon),
     path: "/dashboard/foreclosure",
   },
   {
    id: "generator",
    label:"Generators",
-   icon: createIcon(UserCircleIcon),
+   icon: createIcon(Zap),
    path:'/dashboard/generators'
 
   },
@@ -34,7 +34,6 @@ export const adminSidebar: AppRoute[] = [
     children: [
       { id: "maint-vehicle", label: "Vehicle Service Records", path: "/dashboard/maintenance/vehicles" },
       { id: "maint-generator", label: "Generator Service Records", path: "/dashboard/maintenance/generators" },
-      { id: "maint-tire", label: "Tire Records", path: "/dashboard/maintenance/tires" },
       { id: "maint-agreements", label: "Maintenance Agreements", path: "/dashboard/maintenance/agreements" },
     ],
   },
@@ -49,7 +48,7 @@ export const adminSidebar: AppRoute[] = [
    {
     id: "insurances",
     label: "Insurances",
-    icon: createIcon(Gauge),
+    icon: createIcon(Shield),
     path: "/dashboard/insurances",
   },
   {
@@ -82,7 +81,6 @@ export const pfoSidebar: AppRoute[] = [
     children: [
       { id: "maint-vehicle", label: "Vehicle Maintenance", path: "/dashboard/maintenance/vehicles" },
       { id: "maint-generator", label: "Generator Maintenance", path: "/dashboard/maintenance/generators" },
-      { id: "maint-tire", label: "Tire Records", path: "/dashboard/maintenance/tires" },
       { id: "maint-agreements", label: "Maintenance Agreements", path: "/dashboard/maintenance/agreements" },
     ],
   },
@@ -115,7 +113,7 @@ export const csSidebar: AppRoute[] = [
     icon: createIcon(AlertCircle),
     path: "/dashboard/compliance/reminders",
   },
-  { id: "accidents", label: "Accidents", icon: createIcon(XCircle), path: "/dashboard/accidents" },
+  { id: "accidents", label: "Accidents", icon: createIcon(AlertTriangle), path: "/dashboard/accidents" },
   { id: "fuel", label: "Fuel Records", icon: createIcon(Fuel), path: "/dashboard/fuel" },
 ];
 
