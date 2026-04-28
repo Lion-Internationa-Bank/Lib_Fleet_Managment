@@ -185,121 +185,139 @@ const ForeclosureVehicles: React.FC = () => {
       />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Plate Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Property Owner
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Lender Branch
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Parking Place
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date Into
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date Out
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center">
-                    <div className="flex justify-center items-center">
-                      <RefreshCw size={20} className="animate-spin mr-2" />
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
-              ) : vehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    No vehicles found
-                  </td>
-                </tr>
-              ) : (
-                vehicles.map((vehicle) => {
-                  const status = getStatus(vehicle);
-                  const isActive = status === 'Active';
+       <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Plate Number
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Property Owner
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Lender Branch
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Parking Place
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Nearby Branch
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Classification
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Date Into
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Date Out
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Status
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {loading ? (
+          <tr>
+            <td colSpan={10} className="px-6 py-4 text-center">
+              <div className="flex justify-center items-center">
+                <RefreshCw size={20} className="animate-spin mr-2" />
+                Loading...
+              </div>
+            </td>
+          </tr>
+        ) : vehicles.length === 0 ? (
+          <tr>
+            <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
+              No vehicles found
+            </td>
+          </tr>
+        ) : (
+          vehicles.map((vehicle) => {
+            const status = getStatus(vehicle);
+            const isActive = status === 'Active';
+            
+            return (
+              <tr key={vehicle._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {vehicle.plate_no}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {vehicle.property_owner}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {vehicle.lender_branch}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {vehicle.parking_place}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {vehicle.nearby_branch || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                    vehicle.classification === 'heavy' 
+                      ? 'bg-red-100 text-red-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {vehicle.classification || '-'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatDate(vehicle.date_into)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatDate(vehicle.date_out)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(status)}`}>
+                    {status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
+                  <button
+                    onClick={(e) => toggleDropdown(e, vehicle._id)}
+                    className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
+                    title="Actions"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
                   
-                  return (
-                    <tr key={vehicle._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {vehicle.plate_no}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {vehicle.property_owner}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {vehicle.lender_branch}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {vehicle.parking_place}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(vehicle.date_into)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(vehicle.date_out)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(status)}`}>
-                          {status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
+                  {openDropdownId === vehicle._id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                      <div className="py-1">
                         <button
-                          onClick={(e) => toggleDropdown(e, vehicle._id)}
-                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
-                          title="Actions"
+                          onClick={() => openEditModal(vehicle)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          <MoreVertical size={18} />
+                          <Edit size={16} className="mr-2" />
+                          Edit Vehicle
                         </button>
-                        
-                        {openDropdownId === vehicle._id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                            <div className="py-1">
-                              <button
-                                onClick={() => openEditModal(vehicle)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Edit size={16} className="mr-2" />
-                                Edit Vehicle
-                              </button>
-                              {isActive && (
-                                <button
-                                  onClick={() => openDatePickerModal(vehicle)}
-                                  className="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100"
-                                >
-                                  <LogOut size={16} className="mr-2" />
-                                  Set Exit Date
-                                </button>
-                              )}
-                            </div>
-                          </div>
+                        {isActive && (
+                          <button
+                            onClick={() => openDatePickerModal(vehicle)}
+                            className="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100"
+                          >
+                            <LogOut size={16} className="mr-2" />
+                            Set Exit Date
+                          </button>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (

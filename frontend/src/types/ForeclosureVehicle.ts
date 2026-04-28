@@ -1,9 +1,12 @@
+export type classificationType = '' | 'heavy' | 'small';
 export interface ForeclosureVehicle {
   _id: string;
   plate_no: string;
   property_owner: string;
   lender_branch: string;
   parking_place: string;
+  nearby_branch:string;
+  classification : classificationType
   date_into: string | null;
   date_out: string | null;
   createdAt: string;
@@ -15,6 +18,8 @@ export interface ForeclosureVehicleFormData {
   property_owner: string;
   lender_branch: string;
   parking_place: string;
+  nearby_branch:string;
+  classification : classificationType
   date_into: string;
   date_out: string | null;
 }
@@ -27,6 +32,8 @@ export interface ForeclosureVehicleFilters {
   parking_place?: string;
   date_into?: string;
   date_out?: string;
+  nearby_branch?:string;
+  classification?: classificationType
   status?: FilterStatus;
   page?: number;
   limit?: number;

@@ -3,7 +3,7 @@ import express from 'express';
 // import { protect, restrictTo } from '../middleware/auth.js';
 import {
   createForeclosure,
-  getForeclosuresVehilces,
+  getForeclosuresVehicles,
   updateForeclosure,
   updateForeclosureDateOut,
 } from '../controllers/foreclosureController.js';
@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 
-router.get('/',getForeclosuresVehilces)
+router.get('/',getForeclosuresVehicles)
 router.post('/',createForeclosure)
 // router.patch('/:id', restrictTo('Admin'), updateForeclosure);
 router.put('/:plateNo', updateForeclosure);

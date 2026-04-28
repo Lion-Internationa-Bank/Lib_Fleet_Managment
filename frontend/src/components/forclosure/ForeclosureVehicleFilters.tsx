@@ -18,6 +18,8 @@ const FilterComponent: React.FC<Props> = ({
     property_owner: '',
     lender_branch: '',
     parking_place: '',
+    nearby_branch: '',
+    classification: '',
     status: '' as FilterStatus,
     date_into: '',
   });
@@ -37,6 +39,8 @@ const FilterComponent: React.FC<Props> = ({
         property_owner: '',
         lender_branch: '',
         parking_place: '',
+        nearby_branch: '',
+        classification: '',
         status: '' as FilterStatus,
         date_into: '',
       });
@@ -82,6 +86,8 @@ const FilterComponent: React.FC<Props> = ({
       property_owner: '',
       lender_branch: '',
       parking_place: '',
+      nearby_branch: '',
+      classification: '',
       status: '' as FilterStatus,
       date_into: '',
     };
@@ -93,7 +99,7 @@ const FilterComponent: React.FC<Props> = ({
   };
 
   // Check if any filter has a value (for showing clear button)
-  const hasActiveFilters = Object.entries(filters).some(([ value]) => {
+  const hasActiveFilters = Object.entries(filters).some(([_, value]) => {
     return value !== '' && value !== undefined && value !== null;
   });
 
@@ -172,6 +178,38 @@ const FilterComponent: React.FC<Props> = ({
               placeholder="Search by parking..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* New Filter: Nearby Branch */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nearby Branch
+            </label>
+            <input
+              type="text"
+              name="nearby_branch"
+              value={filters.nearby_branch || ''}
+              onChange={handleChange}
+              placeholder="Search by nearby branch..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* New Filter: Classification */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Classification
+            </label>
+            <select
+              name="classification"
+              value={filters.classification || ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value="heavy">Heavy</option>
+              <option value="small">Small</option>
+            </select>
           </div>
 
           <div>

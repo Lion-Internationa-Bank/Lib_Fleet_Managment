@@ -88,6 +88,8 @@ class ForeclosureVehicleService {
     if (filters.property_owner) params.property_owner = filters.property_owner;
     if (filters.lender_branch) params.lender_branch = filters.lender_branch;
     if (filters.parking_place) params.parking_place = filters.parking_place;
+    if (filters.nearby_branch) params.nearby_branch = filters.nearby_branch;
+    if (filters.classification) params.classification = filters.classification;
     if (filters.date_into) params.date_into = filters.date_into;
     if (filters.date_out) params.date_out = filters.date_out;
     if (filters.status) params.status = filters.status;

@@ -11,9 +11,22 @@ const ForeclosureSchema = new mongoose.Schema({
     uppercase: true,
     trim: true
   },
-  property_owner: String,
-  lender_branch: String,
-  parking_place: String,
+  property_owner:{type: String,
+                  required:true
+                 },
+  lender_branch: {type: String,
+                  required:true
+                 },
+  parking_place: {type: String,
+                  required:true
+                 },
+  nearby_branch: {type: String,
+                  required:true
+                 },
+  classification:{type:String,
+    required:true,
+    enum:["heavy","small"]
+  },
   date_into: Date,
   date_out: Date,
 }, { timestamps: true });

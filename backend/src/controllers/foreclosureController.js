@@ -5,10 +5,10 @@ import ForeclosureVehicle from '../models/ForeclosureVehicle.js';
 const sendNotFound = (res, plateNo) =>
   res.status(404).json({
     success: false,
-    message: `Forclosure Vehicle with plate number '${plateNo}' not found`,
+    message: `Foreclosure Vehicle with plate number '${plateNo}' not found`,
   });
 
-export const createForeclosure = async (req, res,next) => {
+export const createForeclosure = async (req, res, next) => {
   try {
     const foreclosure = await ForeclosureVehicle.create(req.body);
     res.status(201).json({
@@ -16,22 +16,23 @@ export const createForeclosure = async (req, res,next) => {
       data: foreclosure,
     });
   } catch (error) {
-      next(error);
+    next(error);
   }
 };
 
-
 // GET /api/v1/foreclosures?plate_no=ET-12345&property_owner=John&date_into=2025-01-01&page=1&limit=15&sort=-date_into
-export const getForeclosuresVehilces = async (req, res,next) => {
+export const getForeclosuresVehicles = async (req, res, next) => {
   try {
     const {
       plate_no,
       property_owner,
       lender_branch,
       parking_place,
-      date_into,     // filter by entry date (from)
-      date_out,      // filter if exited
-      status,        // custom: 'active' or 'closed'
+      nearby_branch,      // New filter field
+      classification,     // New filter field
+      date_into,          // filter by entry date (from)
+      date_out,           // filter if exited
+      status,             // custom: 'active' or 'closed'
       page = 1,
       limit = 10,
       sort = '-date_into',
@@ -43,6 +44,10 @@ export const getForeclosuresVehilces = async (req, res,next) => {
     if (property_owner) filter.property_owner = { $regex: property_owner, $options: 'i' };
     if (lender_branch) filter.lender_branch = { $regex: lender_branch, $options: 'i' };
     if (parking_place) filter.parking_place = { $regex: parking_place, $options: 'i' };
+    
+    // New filters
+    if (nearby_branch) filter.nearby_branch = { $regex: nearby_branch, $options: 'i' };
+    if (classification) filter.classification = classification; // Exact match for enum
 
     if (date_into) {
       filter.date_into = { $gte: new Date(date_into) };
@@ -97,18 +102,17 @@ export const getForeclosuresVehilces = async (req, res,next) => {
   }
 };
 
-export const updateForeclosure = async (req, res,next) => {
+export const updateForeclosure = async (req, res, next) => {
   try {
-
-   const plate_No = req.params.plateNo
+    const plate_No = req.params.plateNo;
 
     const foreclosure = await ForeclosureVehicle.findOneAndUpdate(
-     {plate_no: plate_No.toUpperCase()},
+      { plate_no: plate_No.toUpperCase() },
       req.body,
       { new: true, runValidators: true }
     );
 
-   if (!foreclosure) return sendNotFound(res, plate_No);
+    if (!foreclosure) return sendNotFound(res, plate_No);
 
     res.status(200).json({
       success: true,
@@ -116,40 +120,42 @@ export const updateForeclosure = async (req, res,next) => {
       data: foreclosure,
     });
   } catch (error) {
-   next(error);
+    next(error);
+  }
+};
+
+export const updateForeclosureDateOut = async (req, res, next) => {
+  try {
+    const plate_no = req.params.plateNo;
+    const { date_out } = req.body;
+
+    console.log("plate no", plate_no);
+    console.log("date out", date_out);
+
+    // Validation: Ensure date_out is provided and is a valid date
+    if (!date_out || isNaN(new Date(date_out))) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A valid date_out field is required in the request body.' 
+      });
+    }
+
+    const updatedForeclosure = await ForeclosureVehicle.findOneAndUpdate(
+      { plate_no: plate_no.toUpperCase() },
+      { date_out: date_out }, // <-- Only update this specific field
+      { new: true }
+    );
+
+    if (!updatedForeclosure) return sendNotFound(res, plate_no);
+
+    res.status(200).json({
+      success: true,
+      message: `Foreclosure vehicle with Plate No. ${plate_no} marked as exited on ${new Date(date_out).toLocaleDateString()}.`,
+      data: updatedForeclosure,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
 
-export const updateForeclosureDateOut = async (req, res, next) => {
-    try {
-     
-        // const { plate_no } = req.params;
-        const plate_no = req.params.plateNo;
-        const { date_out } = req.body;
-
-        console.log("plate no",plate_no)
-         console.log("date out",date_out)
-
-        // Validation: Ensure date_out is provided and is a valid date
-        if (!date_out || isNaN(new Date(date_out))) {
-            return res.status(400).json({ success: false, message: 'A valid date_out field is required in the request body.' });
-        }
-
-        const updatedForeclosure = await ForeclosureVehicle.findOneAndUpdate(
-            {plate_no: plate_no.toUpperCase()},
-            { date_out: date_out }, // <-- Only update this specific field
-            { new: true }
-        );
-
-        if (!updatedForeclosure) return sendNotFound(res, plate_no);
-
-        res.status(200).json({
-            success: true,
-            message: `Foreclosure vehicle with Plate No. ${plate_no} marked as exited on ${new Date(date_out).toLocaleDateString()}.`,
-            data: updatedForeclosure,
-        });
-    } catch (error) {
-      next(error);
-    }
-};

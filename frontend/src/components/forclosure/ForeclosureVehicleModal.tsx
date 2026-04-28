@@ -25,6 +25,8 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
       property_owner: '',
       lender_branch: '',
       parking_place: '',
+      nearby_branch: '',
+      classification: '',
       date_into: '',
       date_out: null,
     }
@@ -37,6 +39,8 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
         property_owner: vehicle.property_owner,
         lender_branch: vehicle.lender_branch,
         parking_place: vehicle.parking_place,
+        nearby_branch: vehicle.nearby_branch || '',
+        classification: vehicle.classification || '',
         date_into: vehicle.date_into ? new Date(vehicle.date_into).toISOString().slice(0, 16) : '',
         date_out: vehicle.date_out ? new Date(vehicle.date_out).toISOString().slice(0, 16) : null,
       });
@@ -46,6 +50,8 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
         property_owner: '',
         lender_branch: '',
         parking_place: '',
+        nearby_branch: '',
+        classification: '',
         date_into: '',
         date_out: null,
       });
@@ -102,6 +108,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
             </div>
 
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+              {/* Plate Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Plate Number *
@@ -109,7 +116,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 <input
                   type="text"
                   {...register('plate_no', { required: 'Plate number is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
                   placeholder="Enter plate number"
                 />
                 {errors.plate_no && (
@@ -117,6 +124,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 )}
               </div>
 
+              {/* Property Owner */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Property Owner *
@@ -132,6 +140,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 )}
               </div>
 
+              {/* Lender Branch */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Lender Branch *
@@ -147,6 +156,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 )}
               </div>
 
+              {/* Parking Place */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Parking Place *
@@ -162,6 +172,38 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 )}
               </div>
 
+              {/* New Field: Nearby Branch */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nearby Branch
+                </label>
+                <input
+                  type="text"
+                  {...register('nearby_branch')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter nearby branch (optional)"
+                />
+              </div>
+
+              {/* New Field: Classification */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Classification *
+                </label>
+                <select
+                  {...register('classification', { required: 'Classification is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select classification</option>
+                  <option value="heavy">Heavy</option>
+                  <option value="small">Small</option>
+                </select>
+                {errors.classification && (
+                  <p className="mt-1 text-sm text-red-600">{errors.classification.message}</p>
+                )}
+              </div>
+
+              {/* Date Into */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Date Into *
@@ -176,6 +218,7 @@ const ForeclosureVehicleModal: React.FC<Props> = ({
                 )}
               </div>
 
+              {/* Date Out */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Date Out
