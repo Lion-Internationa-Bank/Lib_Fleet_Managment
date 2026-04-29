@@ -25,6 +25,12 @@ export const reminderConfig = {
     warning: 7,     // <= 7 days = Warning
     // > 7 days = Info
   },
+    generatorHourThresholds: {
+    critical: 5,   // 5 hours or less = Critical
+    warning: 10    // 10 hours or less = Warning
+  },
+    generatorReminderHours: 15, 
+    generatorAvgHoursPerDay: 2,  
   
   // Logging level: 'debug', 'info', 'warn', 'error'
   logLevel: 'info',

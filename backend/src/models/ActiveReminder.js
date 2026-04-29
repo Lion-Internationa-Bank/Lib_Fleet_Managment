@@ -23,6 +23,9 @@ const ActiveReminderSchema = new mongoose.Schema({
     identifier: String,     // plate_no, serial_no, provider
     provider: String,       // for agreements/insurance
     expiry: Date,           // actual expiry date
+    current_hours: Number,  // Current hour meter reading
+    next_service_hour: Number, // Next service interval (multiple of 200)
+    hours_remaining: Number, // Hours until next service
   },
 
   related_id: {

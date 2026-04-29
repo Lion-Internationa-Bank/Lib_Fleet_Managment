@@ -53,6 +53,28 @@ const getUrgency = (daysLeft) => {
   return 'Info';
 };
 
+// NEW: Calculate next service hour based on 200-hour intervals
+const getNextServiceHour = (currentHourMeter) => {
+  // Find the next multiple of 200
+  const nextMultiple = Math.ceil(currentHourMeter / 200) * 200;
+  return nextMultiple;
+};
+
+// NEW: Calculate hours remaining until next service
+const getHoursRemaining = (currentHourMeter, nextServiceHour) => {
+  return nextServiceHour - currentHourMeter;
+};
+
+// NEW: Determine urgency based on hours remaining for generator
+const getGeneratorUrgency = (hoursRemaining) => {
+  const { generatorHourThresholds } = reminderConfig;
+  
+  if (hoursRemaining <= 0) return 'Critical';
+  if (hoursRemaining <= generatorHourThresholds.critical) return 'Critical';
+  if (hoursRemaining <= generatorHourThresholds.warning) return 'Warning';
+  return 'Info';
+};
+
 // Main sync function
 const syncReminders = async (isScheduledRun = false) => {
   // Prevent multiple simultaneous runs
@@ -153,31 +175,98 @@ const syncReminders = async (isScheduledRun = false) => {
   }
 
   try {
-    // === 2. GENERATORS ===
+    // === 2. GENERATORS (UPDATED: Hour meter based reminders) ===
     logger.debug('Fetching generator reminders...');
-    const generators = await Generator.find({
-      next_service_date: { $gte: today, $lte: thirtyDaysFromNow },
-    }).lean();
+    
+    // Get all active generators
+    const generators = await Generator.find({}).lean();
+
+    let generatorReminderCount = 0;
 
     for (const g of generators) {
-      const daysLeft = getDaysLeft(g.next_service_date, today);
-      if (daysLeft >= 0 && daysLeft <= reminderConfig.reminderWindowDays) {
+      const currentHours = g.current_hour_meter || 0;
+      const nextServiceHour = getNextServiceHour(currentHours);
+      const hoursRemaining = getHoursRemaining(currentHours, nextServiceHour);
+      
+      // Check if hours remaining is 15 or less (warning threshold)
+      // OR if next service hour is within the configured hour threshold
+      const shouldCreateReminder = 
+        hoursRemaining <= reminderConfig.generatorReminderHours || // Default: 15 hours
+        (hoursRemaining > 0 && hoursRemaining <= reminderConfig.generatorReminderHours);
+      
+      if (shouldCreateReminder && hoursRemaining > 0) {
+        // Estimate due date based on average daily usage (optional)
+        // You can configure averageHoursPerDay in config
+        let estimatedDueDate = new Date();
+        if (reminderConfig.generatorAvgHoursPerDay && reminderConfig.generatorAvgHoursPerDay > 0) {
+          const daysToService = Math.ceil(hoursRemaining / reminderConfig.generatorAvgHoursPerDay);
+          estimatedDueDate.setDate(today.getDate() + daysToService);
+        } else {
+          // Default: add 30 days as placeholder
+          estimatedDueDate.setDate(today.getDate() + 30);
+        }
+        
+        const urgency = getGeneratorUrgency(hoursRemaining);
+        
         reminderBuffer.push({
           reminder_type: 'Generator Maintenance',
-          title: `Generator Service: ${g.serial_no}`,
-          days_left: daysLeft,
-          due_date: g.next_service_date,
-          urgency: getUrgency(daysLeft),
+          title: `Generator Service Due: ${g.serial_no}`,
+          days_left: hoursRemaining, // Store hours remaining instead of days
+          due_date: estimatedDueDate,
+          urgency: urgency,
           metadata: {
             location: g.location || 'N/A',
             allocation: g.allocation || 'N/A',
             identifier: g.serial_no,
+            current_hours: currentHours,
+            next_service_hour: nextServiceHour,
+            hours_remaining: hoursRemaining,
           },
           related_id: g._id,
         });
+        
+        generatorReminderCount++;
+        
+        // Log critical warnings
+        if (urgency === 'Critical') {
+          logger.warn(`⚠️ Generator ${g.serial_no} needs service in ${hoursRemaining} hours!`);
+        } else if (urgency === 'Warning') {
+          logger.info(`📢 Generator ${g.serial_no} service due in ${hoursRemaining} hours`);
+        }
+      }
+      
+      // Also keep date-based service reminder if next_service_date exists
+      if (g.next_service_date) {
+        const daysLeft = getDaysLeft(g.next_service_date, today);
+        if (daysLeft >= 0 && daysLeft <= reminderConfig.reminderWindowDays) {
+          // Check if we already have a reminder for this generator
+          const existingReminder = reminderBuffer.find(
+            r => r.related_id?.toString() === g._id.toString() && 
+            r.reminder_type === 'Generator Maintenance'
+          );
+          
+          if (!existingReminder) {
+            reminderBuffer.push({
+              reminder_type: 'Generator Maintenance',
+              title: `Generator Date-Based Service: ${g.serial_no}`,
+              days_left: daysLeft,
+              due_date: g.next_service_date,
+              urgency: getUrgency(daysLeft),
+              metadata: {
+                location: g.location || 'N/A',
+                allocation: g.allocation || 'N/A',
+                identifier: g.serial_no,
+                current_hours: g.current_hour_meter || 0,
+              },
+              related_id: g._id,
+            });
+            generatorReminderCount++;
+          }
+        }
       }
     }
-    logger.debug(`Found ${generators.length} generators with upcoming service`);
+    
+    logger.debug(`Found ${generatorReminderCount} generator reminders (hour-based threshold: ${reminderConfig.generatorReminderHours} hours)`);
   } catch (error) {
     logger.warn('Generator reminders failed:', error.message);
     errors.push('Generator sync failed');
