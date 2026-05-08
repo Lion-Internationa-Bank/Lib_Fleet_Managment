@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Calendar, FileText,  Hash, ChevronDown } from 'lucide-react';
+import { Download, Calendar, FileText, Hash, ChevronDown, MapPin } from 'lucide-react';
 import { ReportOption, ReportFormat, PERIOD_OPTIONS, FORMAT_OPTIONS } from '../../types/Reports';
 import { toast } from 'sonner';
 
@@ -15,6 +15,7 @@ const ReportCard: React.FC<Props> = ({ report, onGenerate }) => {
   const [endDate, setEndDate] = useState<string>('');
   const [plateNo, setPlateNo] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [nearbyBranch, setNearbyBranch] = useState<string>('');
 
   const handleGenerate = async () => {
     try {
@@ -26,6 +27,11 @@ const ReportCard: React.FC<Props> = ({ report, onGenerate }) => {
 
       if (report.requiresPlateNo && !plateNo) {
         toast.error('Please enter a plate number');
+        return;
+      }
+
+      if (report.requiresNearbyBranch && !nearbyBranch) {
+        toast.error('Please enter a nearby branch');
         return;
       }
 
@@ -55,6 +61,11 @@ const ReportCard: React.FC<Props> = ({ report, onGenerate }) => {
       if (report.requiresPlateNo) {
         params.plateNo = plateNo;
         await onGenerate({ ...params, plateNo });
+      } else if (report.requiresNearbyBranch) {
+        params.nearby_branch = nearbyBranch;
+        params.startDate = startDate;
+        params.endDate = endDate;
+        await onGenerate(params);
       } else {
         await onGenerate(params);
       }
@@ -84,6 +95,8 @@ const ReportCard: React.FC<Props> = ({ report, onGenerate }) => {
         return 'from-yellow-50 to-white';
       case 'generator-maintenance':
         return 'from-indigo-50 to-white';
+      case 'parking-payment':
+        return 'from-emerald-50 to-white';
       default:
         return 'from-gray-50 to-white';
     }
@@ -211,6 +224,23 @@ const ReportCard: React.FC<Props> = ({ report, onGenerate }) => {
               value={plateNo}
               onChange={(e) => setPlateNo(e.target.value.toUpperCase())}
               placeholder="e.g., ABC-123"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 uppercase"
+            />
+          </div>
+        )}
+
+        {/* Nearby Branch Input */}
+        {report.requiresNearbyBranch && (
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+              <MapPin size={14} className="inline mr-1 text-gray-400" />
+              Nearby Branch
+            </label>
+            <input
+              type="text"
+              value={nearbyBranch}
+              onChange={(e) => setNearbyBranch(e.target.value.toUpperCase())}
+              placeholder="e.g., ADDIS ABABA, DIRE DAWA"
               className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 uppercase"
             />
           </div>

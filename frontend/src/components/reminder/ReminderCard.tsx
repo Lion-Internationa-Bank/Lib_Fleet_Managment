@@ -1,13 +1,17 @@
 import React from 'react';
 import { 
   Calendar, Clock, MapPin, Hash, AlertTriangle,
-  Shield, Zap, Wrench, FileText, Bell
+  Shield, Zap, Wrench, FileText, Bell, Activity, Gauge
 } from 'lucide-react';
 import { 
   ActiveReminder, 
   getUrgencyColor, 
   formatDaysLeft,
   getDaysLeftColor,
+  isGeneratorReminder,
+  formatHoursRemaining,
+  getHoursLeftColor,
+  getGeneratorProgress
 } from '../../types/Reminder';
 
 interface Props {
@@ -16,7 +20,12 @@ interface Props {
 
 const ReminderCard: React.FC<Props> = ({ reminder }) => {
   const urgencyColor = getUrgencyColor(reminder.urgency);
-  const daysLeftColor = getDaysLeftColor(reminder.days_left);
+  const isGenerator = isGeneratorReminder(reminder);
+  
+  // For generator reminders, use hours-based color, otherwise use days-based
+  const daysLeftColor = isGenerator && reminder.metadata.hours_remaining !== undefined
+    ? getHoursLeftColor(reminder.metadata.hours_remaining)
+    : getDaysLeftColor(reminder.days_left);
   
   const getTypeSpecificIcon = () => {
     switch (reminder.reminder_type) {
@@ -35,6 +44,20 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
     }
   };
 
+  const getRemainingText = () => {
+    if (isGenerator && reminder.metadata.hours_remaining !== undefined) {
+      return formatHoursRemaining(reminder.metadata.hours_remaining);
+    }
+    return formatDaysLeft(reminder.days_left);
+  };
+
+  const getRemainingValue = () => {
+    if (isGenerator && reminder.metadata.hours_remaining !== undefined) {
+      return `${reminder.metadata.hours_remaining} hours`;
+    }
+    return `${reminder.days_left} days`;
+  };
+
   return (
     <div className={`bg-white rounded-lg border-l-4 ${urgencyColor.border} shadow-sm hover:shadow-md transition-shadow p-4`}>
       <div className="flex items-start justify-between">
@@ -44,7 +67,7 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
           </div>
           
           <div className="flex-1">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-2">
               <h3 className="font-semibold text-gray-900">{reminder.title}</h3>
               <span className={`text-xs px-2 py-0.5 rounded-full ${urgencyColor.bg} ${urgencyColor.text}`}>
                 {reminder.reminder_type}
@@ -52,14 +75,19 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
               <span className={`text-xs px-2 py-0.5 rounded-full ${urgencyColor.bg} ${urgencyColor.text} font-medium`}>
                 {reminder.urgency}
               </span>
+              {isGenerator && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                  Hour-based
+                </span>
+              )}
             </div>
             
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              {/* Days Left - Most Important */}
+              {/* Time Remaining - Shows hours for generators, days for others */}
               <div className="flex items-center space-x-1 text-gray-600">
                 <Clock size={14} className="text-gray-400" />
                 <span className={daysLeftColor}>
-                  {formatDaysLeft(reminder.days_left)}
+                  {getRemainingText()}
                 </span>
               </div>
               
@@ -85,6 +113,22 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
                 </div>
               )}
 
+              {/* Generator-specific: Current Hours */}
+              {isGenerator && reminder.metadata.current_hours !== undefined && (
+                <div className="flex items-center space-x-1 text-gray-600">
+                  <Activity size={14} className="text-gray-400" />
+                  <span>Current: {reminder.metadata.current_hours} hrs</span>
+                </div>
+              )}
+
+              {/* Generator-specific: Next Service Hour */}
+              {isGenerator && reminder.metadata.next_service_hour !== undefined && (
+                <div className="flex items-center space-x-1 text-gray-600">
+                  <Gauge size={14} className="text-gray-400" />
+                  <span>Next: {reminder.metadata.next_service_hour} hrs</span>
+                </div>
+              )}
+
               {/* Location/Allocation */}
               {(reminder.metadata.location || reminder.metadata.allocation) && (
                 <div className="flex items-center space-x-1 text-gray-600 col-span-2">
@@ -98,6 +142,41 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
               )}
             </div>
 
+            {/* Generator Progress Bar */}
+            {isGenerator && reminder.metadata.current_hours !== undefined && 
+             reminder.metadata.next_service_hour !== undefined && (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>Service interval progress (200 hrs)</span>
+                  <span className="font-medium">
+                    {Math.round(getGeneratorProgress(
+                      reminder.metadata.current_hours,
+                      reminder.metadata.next_service_hour
+                    ))}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-500 ${
+                      (reminder.metadata.hours_remaining || 0) <= 5 ? 'bg-red-500' :
+                      (reminder.metadata.hours_remaining || 0) <= 10 ? 'bg-orange-500' :
+                      (reminder.metadata.hours_remaining || 0) <= 15 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(100, Math.max(0, getGeneratorProgress(
+                        reminder.metadata.current_hours,
+                        reminder.metadata.next_service_hour
+                      )))}%` 
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>{(reminder.metadata.next_service_hour || 0) - 200} hrs</span>
+                  <span className="font-medium text-gray-700">{reminder.metadata.next_service_hour} hrs</span>
+                </div>
+              </div>
+            )}
+
             {/* Expiry Date if available */}
             {reminder.metadata.expiry && (
               <div className="mt-2 text-xs text-gray-500 border-t pt-2">
@@ -110,8 +189,13 @@ const ReminderCard: React.FC<Props> = ({ reminder }) => {
         {/* Urgency Indicator */}
         <div className="ml-4 flex flex-col items-end">
           <span className={`text-xs font-medium px-2 py-1 rounded ${urgencyColor.bg} ${urgencyColor.text}`}>
-            {reminder.days_left < 0 ? 'OVERDUE' : `${reminder.days_left} days`}
+            {reminder.days_left < 0 && !isGenerator ? 'OVERDUE' : getRemainingValue()}
           </span>
+          {isGenerator && reminder.metadata.hours_remaining !== undefined && (
+            <span className="text-xs text-gray-500 mt-1">
+              {reminder.metadata.hours_remaining <= 15 ? '⚠️ Schedule soon' : 'On track'}
+            </span>
+          )}
         </div>
       </div>
     </div>

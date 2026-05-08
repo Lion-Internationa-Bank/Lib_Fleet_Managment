@@ -4,6 +4,10 @@ export interface ReminderMetadata {
   identifier?: string;
   provider?: string;
   expiry?: string;
+  // Generator-specific fields
+  current_hours?: number;
+  next_service_hour?: number;
+  hours_remaining?: number;
 }
 
 export interface ActiveReminder {
@@ -106,10 +110,40 @@ export const formatDaysLeft = (days: number): string => {
   return `In ${days} days`;
 };
 
+// NEW: Format hours remaining for generators
+export const formatHoursRemaining = (hours: number): string => {
+  if (hours < 0) return 'Overdue';
+  if (hours === 0) return 'Due now';
+  if (hours === 1) return '1 hour';
+  return `${hours} hours`;
+};
+
+// NEW: Check if reminder is generator-based and has hour data
+export const isGeneratorReminder = (reminder: ActiveReminder): boolean => {
+  return reminder.reminder_type === 'Generator Maintenance' && 
+         reminder.metadata.hours_remaining !== undefined;
+};
+
+// NEW: Get progress percentage for generator hour meter
+export const getGeneratorProgress = (currentHours: number, nextServiceHour: number): number => {
+  const previousService = nextServiceHour - 200;
+  const progress = ((currentHours - previousService) / 200) * 100;
+  return Math.min(100, Math.max(0, progress));
+};
+
 export const getDaysLeftColor = (days: number): string => {
   if (days < 0) return 'text-red-600 font-bold';
   if (days <= 3) return 'text-red-600 font-semibold';
   if (days <= 7) return 'text-orange-600';
   if (days <= 14) return 'text-yellow-600';
+  return 'text-green-600';
+};
+
+// NEW: Get color based on hours remaining
+export const getHoursLeftColor = (hours: number): string => {
+  if (hours <= 0) return 'text-red-600 font-bold';
+  if (hours <= 5) return 'text-red-600 font-semibold';
+  if (hours <= 10) return 'text-orange-600';
+  if (hours <= 15) return 'text-yellow-600';
   return 'text-green-600';
 };

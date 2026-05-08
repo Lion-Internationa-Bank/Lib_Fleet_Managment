@@ -6,6 +6,7 @@ export interface ReportRequest {
   period?: ReportPeriod;
   startDate?: string;
   endDate?: string;
+  nearby_branch?: string;
 }
 
 export interface ReportOption {
@@ -17,6 +18,7 @@ export interface ReportOption {
   availableFormats: ReportFormat[];
   requiresDateRange: boolean;
   requiresPlateNo?: boolean;
+   requiresNearbyBranch?:boolean;
   color: string;
   bgColor: string;
 }
@@ -99,7 +101,19 @@ export const REPORT_TYPES: ReportOption[] = [
     requiresDateRange: true,
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-100'
-  }
+  },
+  {
+  id: 'parking-payment',
+  name: 'Parking Payment Report',
+  description: 'Parking payment report by nearby branch with daily rates based on vehicle classification',
+  endpoint: '/reports/parking-payment',
+  icon: '💰',
+  availableFormats: ['excel'],
+  requiresDateRange: true,
+  requiresNearbyBranch: true,
+  color: 'text-emerald-600',
+  bgColor: 'bg-emerald-100'
+}
 ];
 
 export const PERIOD_OPTIONS = [

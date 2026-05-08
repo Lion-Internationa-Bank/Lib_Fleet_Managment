@@ -44,6 +44,9 @@ const Reports: React.FC = () => {
         case 'generator-maintenance':
           await reportService.generateGeneratorMaintenanceReport(params);
           break;
+        case 'parking-payment':
+          await reportService.generateParkingPaymentReport(params)
+          break;
         default:
           throw new Error('Unknown report type');
       }

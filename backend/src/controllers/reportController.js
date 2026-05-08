@@ -387,9 +387,6 @@ export const generateForeclosedReport = catchAsync(async (req, res) => {
   }
 });
 
-
-
-
 // accident report
 export const generateAccidentReport = catchAsync(async (req, res) => {
   const { format = 'excel', period, startDate, endDate } = req.query;
@@ -796,14 +793,6 @@ if (format.toLowerCase() === 'word') {
 
 
 });
-
-
-
-
-
-
-
-
 
 // Format Row Helper
 const formatMaintenanceRow = (item) => ({
@@ -1537,12 +1526,6 @@ if (format.toLowerCase() === "word") {
 
 });
 
-
-
-
-
-
-
 export const generateSingleVehicleMaintenanceReport = catchAsync(async (req, res) => {
   const { plateNo } = req.params;
   const { format = 'excel' } = req.query;
@@ -2065,10 +2048,6 @@ export const generateSingleVehicleMaintenanceReport = catchAsync(async (req, res
 }
 
 });
-
-
-
-
 
 export const generateFuelExpenseReport = catchAsync(async (req, res) => {
   const { format = 'excel', period, startDate, endDate } = req.query;
@@ -2638,8 +2617,6 @@ if (format.toLowerCase() === 'word') {
 
 });
 
-
-
 export const generateGeneratorMaintenanceReport = catchAsync(async (req, res) => {
   const { format = 'excel', period, startDate, endDate } = req.query;
 
@@ -3071,4 +3048,161 @@ if (format.toLowerCase() === 'word') {
     .send(buffer);
 }
 
+});
+
+// Parking Payment Report
+export const generateParkingPaymentReport = catchAsync(async (req, res) => {
+  const { format = 'excel', period, startDate, endDate, nearby_branch } = req.query;
+
+  if (!['excel'].includes(format.toLowerCase())) {
+    return res.status(400).json({ success: false, message: 'Currently only Excel format is supported' });
+  }
+
+  if (!nearby_branch) {
+    return res.status(400).json({ success: false, message: 'Nearby branch is required' });
+  }
+
+  // Get date range using helper function
+  let dateQuery, titleSuffix;
+  try {
+    const result = getDateRange(period, startDate, endDate);
+    dateQuery = result.query;
+    titleSuffix = result.titleSuffix;
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+
+  const dailyRates = {
+    heavy: parseFloat(process.env.PARKING_DAILY_RATE_HEAVY) || 50,
+    small: parseFloat(process.env.PARKING_DAILY_RATE_SMALL) || 30
+  };
+
+  // Find all vehicles for the given nearby branch that were active during the period
+  const vehicles = await ForeclosedVehicle.find({
+    nearby_branch: { $regex: nearby_branch, $options: 'i' },
+    date_into: { $lte: dateQuery.$lte },
+    $or: [
+      { date_out: { $gte: dateQuery.$gte } },
+      { date_out: null }
+    ]
+  }).lean();
+
+  if (vehicles.length === 0) {
+    return res.status(404).json({ 
+      success: false, 
+      message: `No vehicles found for nearby branch: ${nearby_branch} in the period ${titleSuffix}` 
+    });
+  }
+
+  // Group by parking_place
+  const groupedByParkingPlace = vehicles.reduce((acc, vehicle) => {
+    const parkingPlace = vehicle.parking_place || 'Unknown';
+    if (!acc[parkingPlace]) acc[parkingPlace] = [];
+    acc[parkingPlace].push(vehicle);
+    return acc;
+  }, {});
+
+  const workbook = new ExcelJS.Workbook();
+
+  // Helper to calculate days parked and payment
+  const calculateParkingDetails = (vehicle, reportStart, reportEnd) => {
+    const dateInto = new Date(vehicle.date_into);
+    const dateOut = vehicle.date_out ? new Date(vehicle.date_out) : reportEnd;
+    
+    const effectiveStart = dateInto > reportStart ? dateInto : reportStart;
+    const effectiveEnd = dateOut < reportEnd ? dateOut : reportEnd;
+    
+    const daysParked = Math.max(1, Math.ceil((effectiveEnd - effectiveStart) / (1000 * 60 * 60 * 24)));
+    const dailyRate = dailyRates[vehicle.classification] || dailyRates.small;
+    const payment = daysParked * dailyRate;
+    
+    return { daysParked, payment, dailyRate };
+  };
+
+  // Create a worksheet for each parking place
+  for (const [parkingPlace, placeVehicles] of Object.entries(groupedByParkingPlace)) {
+    const worksheet = workbook.addWorksheet(parkingPlace.substring(0, 31));
+    
+    // Title
+    worksheet.mergeCells('A1:L1');
+    worksheet.getCell('A1').value = `PARKING PAYMENT REPORT - ${nearby_branch.toUpperCase()}`;
+    worksheet.getCell('A1').font = { size: 16, bold: true };
+    worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).height = 30;
+
+    worksheet.mergeCells('A2:L2');
+    worksheet.getCell('A2').value = `Parking Place: ${parkingPlace}`;
+    worksheet.getCell('A2').font = { size: 14, bold: true };
+    worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(2).height = 25;
+
+    worksheet.mergeCells('A3:L3');
+    worksheet.getCell('A3').value = `Period: ${titleSuffix}`;
+    worksheet.getCell('A3').alignment = { horizontal: 'center' };
+    worksheet.getRow(3).height = 20;
+
+    // Headers
+    const headers = [
+      'S.N', 'Plate No', 'Property Owner', 'Lender Branch', 
+      'Parking Place', 'Nearby Branch', 'Classification', 
+      'Date Into', 'Date Out', 'Days Parked', 'Daily Rate (ETB)', 'Payment (ETB)'
+    ];
+    
+    const headerRow = worksheet.addRow(headers);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    headerRow.height = 25;
+
+    let totalPayment = 0;
+
+    placeVehicles.forEach((vehicle, idx) => {
+      const { daysParked, payment, dailyRate } = calculateParkingDetails(vehicle, dateQuery.$gte, dateQuery.$lte);
+      totalPayment += payment;
+
+      worksheet.addRow([
+        idx + 1,
+        vehicle.plate_no || 'N/A',
+        vehicle.property_owner || 'N/A',
+        vehicle.lender_branch || 'N/A',
+        vehicle.parking_place || 'N/A',
+        vehicle.nearby_branch || 'N/A',
+        vehicle.classification || 'N/A',
+        vehicle.date_into ? new Date(vehicle.date_into).toLocaleDateString('en-GB') : 'N/A',
+        vehicle.date_out ? new Date(vehicle.date_out).toLocaleDateString('en-GB') : 'Active',
+        daysParked,
+        dailyRate.toFixed(2),
+        payment.toFixed(2)
+      ]);
+    });
+
+    // Add empty row
+    worksheet.addRow([]);
+    
+    // Summary row
+    const summaryRow = worksheet.addRow([
+      'TOTAL', '', '', '', '', '', '', '', '', '', '', totalPayment.toFixed(2)
+    ]);
+    summaryRow.font = { bold: true };
+    summaryRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+    
+    // Auto-fit columns
+    worksheet.columns.forEach(column => {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellValue = cell.value ? cell.value.toString() : '';
+        maxLength = Math.max(maxLength, cellValue.length);
+      });
+      column.width = Math.min(maxLength + 2, 30);
+    });
+  }
+
+  const filename = `Parking_Payment_Report_${nearby_branch}_${titleSuffix.replace(/[/]/g, '-')}`;
+  
+  const buffer = await workbook.xlsx.writeBuffer();
+  
+  res.set({
+    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
+  }).send(buffer);
 });

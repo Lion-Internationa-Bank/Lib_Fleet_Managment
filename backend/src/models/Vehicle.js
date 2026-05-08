@@ -21,6 +21,7 @@ const VehicleSchema = new mongoose.Schema({
   chassis_no: { type: String, required: true },
   engine_no: { type: String, required: true },
   seating_capacity: { type: Number, required: true },
+  status:{type:String ,default:'active',enum:['active','lost']},
   pay_load: Number,
   total_weight: Number,
   horse_power: Number,

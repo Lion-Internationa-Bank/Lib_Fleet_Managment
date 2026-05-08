@@ -90,6 +90,8 @@ class ReportService {
     await api.download(`${this.baseUrl}/fuel-expense`, filename, queryParams);
   }
 
+
+
   // Generator Maintenance Report
   async generateGeneratorMaintenanceReport(params: ReportRequest): Promise<void> {
     const { format, period, startDate, endDate } = params;
@@ -105,7 +107,22 @@ class ReportService {
     const filename = `generator_maintenance_${new Date().toISOString().split('T')[0]}.${format}`;
     await api.download(`${this.baseUrl}/generator-maintenance`, filename, queryParams);
   }
+  
+  // Parking Payment Report
+  async generateParkingPaymentReport(params: ReportRequest): Promise<void> {
+    const { period, startDate, endDate, nearby_branch } = params;
+     const queryParams: Record<string, any> = { nearby_branch,format: 'excel'};
+       if (period && period !== 'custom') {
+      queryParams.period = period;
+    } else if (startDate && endDate) {
+      queryParams.startDate = startDate;
+      queryParams.endDate = endDate;
+    }
+    const filename = `parking_payment_${nearby_branch}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    await api.download(`${this.baseUrl}/parking-payment`, filename,queryParams);
+  }
 }
+
 
 export const reportService = new ReportService();
 export default reportService;

@@ -6,7 +6,8 @@ import { generateForeclosedReport,
      generateMaintenanceTypeReport, 
      generateSingleVehicleMaintenanceReport,
      generateFuelExpenseReport,
-generateGeneratorMaintenanceReport } from '../controllers/reportController.js';
+generateGeneratorMaintenanceReport,
+generateParkingPaymentReport } from '../controllers/reportController.js';
 
 const router = express.Router();
 
@@ -34,4 +35,6 @@ router.get('/maintenance-jacket/:plateNo', generateSingleVehicleMaintenanceRepor
 router.get('/fuel-expense', generateFuelExpenseReport);
 
 router.get('/generator-maintenance', generateGeneratorMaintenanceReport);
+
+router.get('/parking-payment', generateParkingPaymentReport);
 export default router;
